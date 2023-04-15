@@ -151,3 +151,7 @@ docker-stack.yml
 # logs
 logs
 *.ods
+
+# pyxel
+pyxel/
+pyxel_examples/
