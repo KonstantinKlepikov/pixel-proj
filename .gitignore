@@ -155,3 +155,5 @@ logs
 # pyxel
 pyxel/
 pyxel_examples/
+pyxel-games/
+pyxel-snippets/
