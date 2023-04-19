@@ -29,18 +29,27 @@ class App:
                 self.paused = True
 
     def draw(self) -> None:
-        pyxel.rectb(10, 10, 206, 206, 1)
+        self.draw_grid()
 
-        pyxel.text(220, 20, "SCORE", 10)
-        pyxel.text(220, 30, str(self.score), self.set_color("score_color_timout"))
+        pyxel.text(219, 20, "SCORE", 10)
+        pyxel.text(219, 30, str(self.score), self.set_color("score_color_timout"))
 
-        pyxel.text(220, 50, "SPEED", 10)
-        pyxel.text(220, 60, str(self.speed), self.set_color("speed_color_timeout"))
+        pyxel.text(219, 50, "SPEED", 10)
+        pyxel.text(219, 60, str(self.speed), self.set_color("speed_color_timeout"))
 
         pyxel.text(20, 226, "Q:quit", 8)
         pyxel.text(50, 226, "R:restart", 9)
-        pyxel.text(92, 226, "P:pause", 12)
-        pyxel.text(100, 236, 'paused', self.set_paused_color())
+        pyxel.text(92, 226, "P:pause", self.set_paused_color())
+
+    def draw_grid(self):
+        # grid
+        pyxel.cls(0)
+        pyxel.rectb(10, 10, 205, 205, 1)
+
+        for p in range(10, 217, 6):
+            color = 13 if p != 112 else 15
+            pyxel.line(p, 10, p, 214, color)
+            pyxel.line(10, p, 214, p, color)
 
     def change_score(self) -> None:
         self.score += 50
@@ -60,7 +69,7 @@ class App:
     def set_paused_color(self) -> int:
         if self.paused:
             return pyxel.frame_count % 8
-        return 0
+        return 12
 
 
 App()
