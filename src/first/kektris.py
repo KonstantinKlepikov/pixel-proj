@@ -1,4 +1,5 @@
 import pyxel
+from blocks import Block
 
 
 class App:
