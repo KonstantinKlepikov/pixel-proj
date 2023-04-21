@@ -3,4 +3,4 @@
 # Exit in case of error
 set -e
 
-watchmedo auto-restart -d first/ -p *.py -R -- python first/kektris.py
+watchmedo auto-restart -d app/ -p *.py -R -- python app/kektris.py
