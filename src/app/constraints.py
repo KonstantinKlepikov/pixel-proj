@@ -5,11 +5,11 @@ class BaseEnum(Enum):
     """Base class for enumeration
     """
     @classmethod
-    def has_value(cls, value: str | int) -> bool:
+    def has_value(cls, value: int) -> bool:
         return value in cls._value2member_map_
 
     @classmethod
-    def get_values(cls) -> list[str | int]:
+    def get_values(cls) -> list[int]:
         return [e.value for e in cls]
 
 
