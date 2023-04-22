@@ -1,13 +1,12 @@
 import pyxel
 import random
-from blocks import Block
-from constraints import Direction, Shape
+from kektris.blocks import Block, Cell, Grid
+from kektris.constraints import Direction, Shape
 
 
 class App:
     def __init__(self) -> None:
         pyxel.init(256, 256, title="Kektris")
-        # pyxel.image(0).load(0, 0, 'blocks_8x56.png')
         pyxel.load('blocks.pyxres', image=True)
         self.reset()
         pyxel.run(self.update, self.draw)
@@ -22,6 +21,7 @@ class App:
         self.speed_color_timeout = 60
 
         self.grid: list[int] = []
+        self._grid: Grid = Grid()
         self.grid_higlight = False
 
         self.frame_count_from_last_move = 0
@@ -29,6 +29,31 @@ class App:
         self.grid_tile_colors: list[int] = []
         self.set_gtid_start_state()
         self.set_block()
+
+    def draw(self) -> None:
+        """Draw current screen
+        """
+        pyxel.cls(0)
+        pyxel.rectb(10, 10, 205, 205, 1)
+
+        pyxel.text(219, 20, "SCORE", 10)
+        pyxel.text(219, 30, str(self.score), self.set_color("score_color_timeout"))
+
+        pyxel.text(219, 50, "SPEED", 10)
+        pyxel.text(219, 60, str(self.speed), self.set_color("speed_color_timeout"))
+
+        pyxel.text(20, 226, "Q:quit", 8)
+
+        pyxel.text(50, 226, "R:restart", 9)
+
+        pyxel.text(88, 226, ">", self.hide_reveal(self.paused))
+        pyxel.text(92, 226, "P:pause", 12)
+
+        pyxel.text(122, 226, ">", self.hide_reveal(self.grid_higlight))
+        pyxel.text(126, 226, "G:greed", 12)
+
+        self.mark_grid()
+        self.draw_grid()
 
     def update(self) -> None:
         """Update current game state
@@ -96,31 +121,6 @@ class App:
                 self.set_block()
 
         self.frame_count_from_last_move += 1
-
-    def draw(self) -> None:
-        """Draw current screen
-        """
-        pyxel.cls(0)
-        pyxel.rectb(10, 10, 205, 205, 1)
-
-        pyxel.text(219, 20, "SCORE", 10)
-        pyxel.text(219, 30, str(self.score), self.set_color("score_color_timeout"))
-
-        pyxel.text(219, 50, "SPEED", 10)
-        pyxel.text(219, 60, str(self.speed), self.set_color("speed_color_timeout"))
-
-        pyxel.text(20, 226, "Q:quit", 8)
-
-        pyxel.text(50, 226, "R:restart", 9)
-
-        pyxel.text(88, 226, ">", self.hide_reveal(self.paused))
-        pyxel.text(92, 226, "P:pause", 12)
-
-        pyxel.text(122, 226, ">", self.hide_reveal(self.grid_higlight))
-        pyxel.text(126, 226, "G:greed", 12)
-
-        self.mark_grid()
-        self.draw_grid()
 
     def mark_grid(self) -> None:
         """Draw grid mark
@@ -231,7 +231,3 @@ class App:
         if self.block.position[0] == 0:
             return True
         return False
-
-
-if __name__ == '__main__':
-    App()

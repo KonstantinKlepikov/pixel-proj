@@ -1,7 +1,7 @@
 import pytest
 import pyxel
 from typing import Callable
-from app.kektris import App
+from kektris.kektris import App
 
 
 @pytest.fixture(scope="function")

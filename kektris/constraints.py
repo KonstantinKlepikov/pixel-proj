@@ -43,6 +43,23 @@ class Orientation(BaseEnum):
     D = 3
 
 
+class CellState(BaseEnum):
+    """Possible state of item
+    """
+    CLEAR = 0
+    BLOCK = 1
+    FR0ZEN = 2
+
+
+class CellPlace(BaseEnum):
+    """Placement of cell
+    """
+    TOP_LEFT = 0
+    TOP_RIGHT = 1
+    BOTTOM_LEFT = 2
+    BOTTOM_RIGHT = 3
+
+
 class BlockOrientation(Enum):
     """All block orientation
 

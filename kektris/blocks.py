@@ -1,14 +1,122 @@
 import random
-from constraints import (
+from kektris.constraints import (
     Direction,
     Shape,
     Orientation,
     BlockOrientation,
+    CellState,
+    CellPlace,
         )
-from typing import Optional
+from typing import Optional, TypeAlias
 
 
-class Block():
+class Cell:
+    """This class represent a cell of grid
+    """
+    pixel_size = 5
+
+    def __init__(
+        self, x: int,
+        y: int,
+        place: CellPlace,
+        state: CellState = CellState.CLEAR
+            ) -> None:
+        self.x = x
+        self.y = y
+        self.place = place
+        self.state = state
+        self._pos = (x, y)
+
+    @property
+    def pos(self) -> tuple[int]:
+        """Return current position
+        """
+        return self._pos
+
+    @property
+    def is_frozen(self) -> bool:
+        return self.state == CellState.FR0ZEN
+
+    @property
+    def is_clear(self) -> bool:
+        return self.state == CellState.CLEAR
+
+    @property
+    def is_blocked(self) -> bool:
+        return self.state == CellState.BLOCK
+
+    @property
+    def is_top_left(self) -> bool:
+        return self.place == CellPlace.TOP_LEFT
+
+    @property
+    def is_top_right(self) -> bool:
+        return self.place == CellPlace.TOP_RIGHT
+
+    @property
+    def is_bottom_left(self) -> bool:
+        return self.place == CellPlace.BOTTOM_LEFT
+
+    @property
+    def is_bottom_right(self) -> bool:
+        return self.place == CellPlace.BOTTOM_RIGHT
+
+    def __hash__(self) -> int:
+        return hash(self.pos)
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Cell):
+            return self.pos == other.pos
+        return NotImplemented
+
+    def freeze(self) -> None:
+        """Freeze cell
+        """
+        self.state = CellState.FR0ZEN
+
+    def clear(self) -> None:
+        """Clear the cell
+        """
+        self.state = CellState.CLEAR
+
+    def block(self) -> None:
+        """Block the cell
+        """
+        self.state = CellState.BLOCK
+
+
+Cells: TypeAlias = list[list[Cell]]
+
+
+class Grid:
+    """This class represent a grid of cells
+    """
+    cells = 34
+    half = 17
+
+    def __init__(self) -> None:
+        self.grid: Cells = self._make_grid()
+
+    def _make_grid(self) -> list[list[Cells]]:
+        grid = []
+        for x in range(0, self.half):
+            row = []
+            for y in range(0, self.half + 1):
+                row.append(Cell(x, y, place=CellPlace.TOP_LEFT))
+            for y in range(self.half + 1, self.cells + 1):
+                row.append(Cell(x, y, place=CellPlace.TOP_RIGHT))
+            grid.append(row)
+        for x in range(self.half + 1, self.cells + 1):
+            row = []
+            for y in range(0, self.half + 1):
+                row.append(Cell(x, y, place=CellPlace.BOTTOM_LEFT))
+            for y in range(self.half + 1, self.cells + 1):
+                row.append(Cell(x, y, place=CellPlace.BOTTOM_RIGHT))
+            grid.append(row)
+        return grid
+
+
+class Block:
     """Kektris block with its current
     orientation and position on the game grid
     """
