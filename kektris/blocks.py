@@ -98,22 +98,66 @@ class Grid:
         self.grid: Cells = self._make_grid()
 
     def _make_grid(self) -> list[list[Cells]]:
+        # TODO: rewrite with list comprehensione
         grid = []
         for x in range(0, self.half):
             row = []
-            for y in range(0, self.half + 1):
+            for y in range(0, self.half):
                 row.append(Cell(x, y, place=CellPlace.TOP_LEFT))
-            for y in range(self.half + 1, self.cells + 1):
+            for y in range(self.half, self.cells):
                 row.append(Cell(x, y, place=CellPlace.TOP_RIGHT))
             grid.append(row)
-        for x in range(self.half + 1, self.cells + 1):
+        for x in range(self.half, self.cells):
             row = []
-            for y in range(0, self.half + 1):
+            for y in range(0, self.half):
                 row.append(Cell(x, y, place=CellPlace.BOTTOM_LEFT))
-            for y in range(self.half + 1, self.cells + 1):
+            for y in range(self.half, self.cells):
                 row.append(Cell(x, y, place=CellPlace.BOTTOM_RIGHT))
             grid.append(row)
         return grid
+
+    @property
+    def get_clear(self) -> list[Cell]:
+        """Get all clear cell
+        """
+        return [cell for row in self.grid for cell in row if cell.is_clear]
+
+    @property
+    def get_frozen(self) -> list[Cell]:
+        """Get all froxen cell
+        """
+        return [cell for row in self.grid for cell in row if cell.is_frozen]
+
+    @property
+    def get_blocked(self) -> list[Cell]:
+        """Get all blocked
+        """
+        return [cell for row in self.grid for cell in row if cell.is_blocked]
+
+    def is_clear(self, pos: tuple[int, int]) -> bool:
+        """Is cell with given position clear
+        """
+        return self.grid[pos[0]][pos[1]].is_clear
+
+    def is_frozen(self, pos: tuple[int, int]) -> bool:
+        """Is cell with given position frozen
+        """
+        return self.grid[pos[0]][pos[1]].is_frozen
+
+    def is_blocked(self, pos: tuple[int, int]) -> bool:
+        """Is cell with given position blocked
+        """
+        return self.grid[pos[0]][pos[1]].is_blocked
+
+    def freeze_blocked(self) -> None:
+        """Freeze all blocked cells
+        """
+        [cell.freeze() for cell in self.get_blocked]
+
+    def clear_blocked(self) -> None:
+        """Clear all blocked cells
+        """
+        [cell.clear() for cell in self.get_blocked]
 
 
 class Block:
