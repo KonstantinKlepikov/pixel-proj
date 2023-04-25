@@ -1,6 +1,11 @@
 import pytest
-from kektris.blocks import Cell, Grid, Block
-from kektris.constraints import CellPlace
+from kektris.blocks import Cell, Grid, Figure, FigureWindow
+from kektris.constraints import CellPlace, FigureOrientation
+
+
+@pytest.fixture(scope='function')
+def grid() -> Grid:
+    return Grid()
 
 
 class TestCell:
@@ -60,10 +65,6 @@ class TestCell:
 class TestGrid:
     """Test Grid class
     """
-
-    @pytest.fixture(scope='function')
-    def grid(self) -> Grid:
-        return Grid()
 
     def test_grid_init(self, grid: Grid) -> None:
         """Test Grid initialization
@@ -149,3 +150,72 @@ class TestGrid:
         assert len(grid.get_clear) == 34 * 34 - 1, 'wrong clear cells len'
         assert len(grid.get_blocked) == 0, 'wrong blocked cells len'
         assert len(grid.get_frozen) == 1, 'wrong frozen cells len'
+
+
+class TestFigureWindow:
+    """Test FigureWinfow class
+    """
+
+    def test_window_get_window(self, grid: Grid) -> None:
+        """Test get_window
+        """
+        window = FigureWindow((0, 0), FigureOrientation.I_L, grid)
+        w = window._get_window()
+        assert isinstance(w, list), 'wrong result type'
+        assert len(w) == 4, 'wrong result len'
+        assert isinstance(w[0], list), 'wrong inside type'
+        assert len(w[0]) == 4, 'wrong inside len'
+        assert isinstance(w[0][0], Cell), 'wrong cell type'
+        assert w[0][0].pos == window.grid.grid[0][0].pos, 'wrong cell value'
+
+    def test_window_get_ofgrid_left_window(self, grid: Grid) -> None:
+        """Test get_window ofboard from top left
+        """
+        window = FigureWindow((-1, -1), FigureOrientation.I_L, grid)
+        w = window._get_window()
+        assert w[0][0] == None, 'wrong ofgrid cell value'
+        assert w[1][0] == None, 'wrong ofgrid cell value'
+        assert w[0][1] == None, 'wrong ofgrid cell value'
+        assert w[1][1].pos == window.grid.grid[0][0].pos, 'wrong grid cell value'
+
+    def test_window_get_ofgrid_right_window(self, grid: Grid) -> None:
+        """Test get_window ofboard from bottom right
+        """
+        window = FigureWindow((33, 33), FigureOrientation.I_L, grid)
+        w = window._get_window()
+        assert w[1][0] == None, 'wrong ofgrid cell value'
+        assert w[0][1] == None, 'wrong ofgrid cell value'
+        assert w[0][0].pos == window.grid.grid[33][33].pos, 'wrong grid cell value'
+
+    def test_map_window(self, grid: Grid) -> None:
+        """Test msp window return cells
+        """
+        window = FigureWindow((0, 0), FigureOrientation.I_L, grid)
+        m = window.map_window()
+        assert isinstance(m, list), 'wrong result type'
+        assert len(m) == 4, 'wrong result len'
+        assert isinstance(m[0], Cell), 'wrong cell type'
+        assert m[0].pos == grid.grid[1][0].pos, 'wrong figure'
+        assert m[1].pos == grid.grid[1][1].pos, 'wrong figure'
+
+    def test_map_window_ofgrid_left_window(self, grid: Grid) -> None:
+        """Test msp window return cells with ofboard from top left
+        """
+        window = FigureWindow((-1, 0), FigureOrientation.I_U, grid)
+        m = window.map_window()
+        assert len(m) == 3, 'wrong result len'
+        assert m[0].pos == grid.grid[0][1].pos, 'wrong figure'
+        assert m[1].pos == grid.grid[1][1].pos, 'wrong figure'
+
+    def test_map_window_ofgrid_right_window(self, grid: Grid) -> None:
+        """Test msp window return cells with ofboard from ищеещь кшпре
+        """
+        window = FigureWindow((33, 31), FigureOrientation.I_U, grid)
+        m = window.map_window()
+        assert len(m) == 1, 'wrong result len'
+        assert m[0].pos == grid.grid[33][32].pos, 'wrong figure'
+
+
+class TestFigure:
+    """Test figure class
+    """

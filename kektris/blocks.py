@@ -6,6 +6,7 @@ from kektris.constraints import (
     BlockOrientation,
     CellState,
     CellPlace,
+    FigureOrientation
         )
 from typing import Optional, TypeAlias
 
@@ -158,6 +159,127 @@ class Grid:
         """Clear all blocked cells
         """
         [cell.clear() for cell in self.get_blocked]
+
+
+class FigureWindow:
+    """Represents 4x4 figure window
+    """
+
+    def __init__(
+        self,
+        top_left: tuple[int, int],
+        orientation: FigureOrientation,
+        grid: Grid,
+            ) -> None:
+        self.top_left = top_left
+        self.orientation = orientation
+        self.grid = grid
+
+    def _get_window(self) -> list[list[Cell | None]]:
+        """Get window of cells
+        """
+        result = [[None, None, None, None] for _ in range(4)]
+        for row in range(4):
+            y = row + self.top_left[1]
+            for col in range(4):
+                x = col + self.top_left[0]
+                if (34 > x >= 0) and (34 > y >= 0):
+                    result[row][col] = self.grid.grid[x][y]
+        return result
+
+    def map_window(self) -> list[Cell]:
+        """Get mapped cell
+        """
+        result = []
+        for maps, cells in zip(self.orientation.value, self._get_window()):
+            result.extend([cell for m, cell in zip(maps, cells) if cell and m])
+        return result
+
+
+class Figure:
+    """Kektris figure with its current
+    orientation and position on the game grid
+    """
+
+    def __init__(
+        self,
+        window: FigureWindow,
+        grid: Grid
+            ) -> None:
+        self.window = window
+        self.shape = window.orientation.name[0]
+        self.grid = grid
+
+    def move_figure(
+        self,
+        direction: Direction,
+            ) -> bool:
+        """Move a figure one step in a given direction
+        """
+        x, y = self.window.top_left
+        match direction:
+            case Direction.LEFT:
+                new_window = FigureWindow((x-1, y), self.window.orientation, self.grid)
+            case Direction.RIGHT:
+                new_window = FigureWindow((x+1, y), self.window.orientation, self.grid)
+            case Direction.UP:
+                new_window = FigureWindow((x, y-1), self.window.orientation, self.grid)
+            case Direction.DOWN:
+                new_window = FigureWindow((x, y+1), self.window.orientation, self.grid)
+        self.block_figure(new_window)
+
+    def rotate_figure(
+        self,
+        direction: Direction,
+            ) -> bool:
+        """Rotates a figure in a given rotation side
+        """
+        match direction:
+            case Direction.LEFT:
+                new_window = FigureWindow(
+                    self.window.top_left,
+                    FigureOrientation(self.shape + '_' + Orientation.U.name),
+                    self.grid
+                        )
+            case Direction.RIGHT:
+                new_window = FigureWindow(
+                    self.window.top_left,
+                    FigureOrientation(self.shape + '_' + Orientation.D.name),
+                    self.grid
+                        )
+            case Direction.UP:
+                new_window = FigureWindow(
+                    self.window.top_left,
+                    FigureOrientation(self.shape + '_' + Orientation.R.name),
+                    self.grid
+                        )
+            case Direction.DOWN:
+                new_window = FigureWindow(
+                    self.window.top_left,
+                    FigureOrientation(self.shape + '_' + Orientation.L.name),
+                    self.grid
+                        )
+        self.block_figure(new_window)
+
+    def block_figure(self, window: FigureWindow) -> bool:
+        """Block cells for figure
+        """
+        if self.is_valid_figure(window):
+            cells = window.map_window()
+            self.grid.clear_blocked()
+            [self.grid.grid[cell.x][cell.y].block() for cell in cells]
+            self.window = window
+            return True
+        return False
+
+    def is_valid_figure(
+        self,
+        cells: list[Cell],
+            ) -> bool:
+        """"Returns true if all the tiles of the block are valid
+        i.e. on the grid and doesn't occupy already filled tiles
+        """
+        return all([cell.is_clear for cell in cells])
 
 
 class Block:

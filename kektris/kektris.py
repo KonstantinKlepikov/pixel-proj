@@ -14,20 +14,23 @@ class App:
     def reset(self) -> None:
         """Reset game state
         """
+        # Menyu parameters
         self.paused = True
         self.score = 0
         self.speed = 0
         self.score_color_timeout = 60
         self.speed_color_timeout = 60
 
+        # grid
         self.grid: list[int] = []
         self._grid: Grid = Grid()
         self.grid_higlight = False
 
+        # game
         self.frame_count_from_last_move = 0
         self.blocks = Shape.get_values()
         self.grid_tile_colors: list[int] = []
-        self.set_gtid_start_state()
+        self.set_grid_start_state()
         self.set_block()
 
     def draw(self) -> None:
@@ -131,7 +134,7 @@ class App:
                 pyxel.line(p, 10, p, 214, color)
                 pyxel.line(10, p, 214, p, color)
 
-    def set_gtid_start_state(self) -> None:
+    def set_grid_start_state(self) -> None:
         """Set grid start state
         """
         for _ in range(34):

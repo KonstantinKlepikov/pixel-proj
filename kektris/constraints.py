@@ -109,3 +109,189 @@ class BlockOrientation(Enum):
     T_U = {(0, 1), (1, 1), (2, 1), (1, 2)}
     T_R = {(1, 0), (1, 1), (1, 2), (2, 1)}
     T_D = {(0, 1), (1, 1), (2, 1), (1, 0)}
+
+
+class FigureOrientation(Enum):
+    """All figures orientation (by longest flat side faces)
+    """
+    # all orientations of figure I
+    I_L = (
+        (False, True, False, False),
+        (False, True, False, False),
+        (False, True, False, False),
+        (False, True, False, False),
+            )
+    I_U = (
+        (False, False, False, False),
+        (True, True, True, True),
+        (False, False, False, False),
+        (False, False, False, False),
+            )
+    I_R = (
+        (False, False, True, False),
+        (False, False, True, False),
+        (False, False, True, False),
+        (False, False, True, False),
+            )
+    I_D = (
+        (False, False, False, False),
+        (False, False, False, False),
+        (True, True, True, True),
+        (False, False, False, False),
+            )
+
+    # all orientations of figure O
+    O_L = (
+        (False, False, False, False),
+        (False, True, True, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+    O_U = (
+        (False, False, False, False),
+        (False, True, True, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+    O_R = (
+        (False, False, False, False),
+        (False, True, True, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+    O_D = (
+        (False, False, False, False),
+        (False, True, True, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+
+    # all orientations of figure J
+    J_L = (
+        (False, True, False, False),
+        (False, True, False, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+    J_U = (
+        (False, False, False, False),
+        (True, True, True, False),
+        (False, False, True, False),
+        (False, False, False, False),
+            )
+    J_R = (
+        (False, True, False, False),
+        (False, True, False, False),
+        (True, True, False, False),
+        (False, False, False, False),
+            )
+    J_D = (
+        (True, False, False, False),
+        (True, True, True, False),
+        (False, False, False, False),
+        (False, False, False, False),
+            )
+
+    # all orientations of figure L
+    L_L = (
+        (False, True, False, False),
+        (False, True, False, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+    L_U = (
+        (False, False, False, False),
+        (True, True, True, False),
+        (False, False, True, False),
+        (False, False, False, False),
+            )
+    L_R = (
+        (True, True, False, False),
+        (False, True, False, False),
+        (False, True, False, False),
+        (False, False, False, False),
+            )
+    L_D = (
+        (True, False, False, False),
+        (True, True, True, False),
+        (False, False, False, False),
+        (False, False, False, False),
+            )
+
+    # all orientations of figure S
+    S_L = (
+        (True, False, False, False),
+        (True, True, False, False),
+        (False, True, False, False),
+        (False, False, False, False),
+            )
+    S_U = (
+        (False, True, True, False),
+        (True, True, False, False),
+        (False, False, False, False),
+        (False, False, False, False),
+            )
+    S_R = (
+        (False, True, False, False),
+        (False, True, True, False),
+        (False, False, True, False),
+        (False, False, False, False),
+            )
+    S_D = (
+        (False, False, False, False),
+        (False, True, True, False),
+        (True, True, False, False),
+        (False, False, False, False),
+            )
+
+    # all orientations of figure Z
+    Z_L = (
+        (False, True, False, False),
+        (True, True, False, False),
+        (True, False, False, False),
+        (False, False, False, False),
+            )
+    Z_U = (
+        (True, True, False, False),
+        (False, True, True, False),
+        (False, False, False, False),
+        (False, False, False, False),
+            )
+    Z_R = (
+        (False, False, True, False),
+        (False, True, True, False),
+        (False, True, False, False),
+        (False, False, False, False),
+            )
+    Z_D = (
+        (False, False, False, False),
+        (True, True, False, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+
+    # all orientations of figure T
+    T_L = (
+        (False, True, False, False),
+        (False, True, True, False),
+        (False, True, False, False),
+        (False, False, False, False),
+            )
+    T_U = (
+        (False, False, False, False),
+        (True, True, True, False),
+        (False, True, False, False),
+        (False, False, False, False),
+            )
+    T_R = (
+        (False, True, False, False),
+        (True, True, False, False),
+        (False, True, False, False),
+        (False, False, False, False),
+            )
+    T_D = (
+        (False, True, False, False),
+        (True, True, True, False),
+        (False, False, False, False),
+        (False, False, False, False),
+            )
