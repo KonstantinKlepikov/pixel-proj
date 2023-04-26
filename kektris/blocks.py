@@ -161,7 +161,7 @@ class Grid:
         [cell.clear() for cell in self.get_blocked]
 
 
-class FigureWindow:
+class Window:
     """Represents 4x4 figure window
     """
 
@@ -203,74 +203,80 @@ class Figure:
 
     def __init__(
         self,
-        window: FigureWindow,
-        grid: Grid
+        window: Window,
             ) -> None:
         self.window = window
         self.shape = window.orientation.name[0]
-        self.grid = grid
 
-    def move_figure(
-        self,
-        direction: Direction,
-            ) -> bool:
+    def move_figure(self, direction: Direction) -> None:
         """Move a figure one step in a given direction
         """
         x, y = self.window.top_left
         match direction:
             case Direction.LEFT:
-                new_window = FigureWindow((x-1, y), self.window.orientation, self.grid)
+                new_window = Window(
+                    (x-1, y),
+                    self.window.orientation,
+                    self.window.grid
+                        )
             case Direction.RIGHT:
-                new_window = FigureWindow((x+1, y), self.window.orientation, self.grid)
+                new_window = Window(
+                    (x+1, y),
+                    self.window.orientation,
+                    self.window.grid
+                        )
             case Direction.UP:
-                new_window = FigureWindow((x, y-1), self.window.orientation, self.grid)
+                new_window = Window(
+                    (x, y-1),
+                    self.window.orientation,
+                    self.window.grid
+                        )
             case Direction.DOWN:
-                new_window = FigureWindow((x, y+1), self.window.orientation, self.grid)
+                new_window = Window(
+                    (x, y+1),
+                    self.window.orientation,
+                    self.window.grid
+                        )
         self.block_figure(new_window)
 
-    def rotate_figure(
-        self,
-        direction: Direction,
-            ) -> bool:
+    def rotate_figure(self, direction: Direction) -> None:
         """Rotates a figure in a given rotation side
         """
         match direction:
             case Direction.LEFT:
-                new_window = FigureWindow(
+                new_window = Window(
                     self.window.top_left,
-                    FigureOrientation(self.shape + '_' + Orientation.U.name),
-                    self.grid
+                    FigureOrientation[self.shape + '_' + Orientation.U.name],
+                    self.window.grid
                         )
             case Direction.RIGHT:
-                new_window = FigureWindow(
+                new_window = Window(
                     self.window.top_left,
-                    FigureOrientation(self.shape + '_' + Orientation.D.name),
-                    self.grid
+                    FigureOrientation[self.shape + '_' + Orientation.D.name],
+                    self.window.grid
                         )
             case Direction.UP:
-                new_window = FigureWindow(
+                new_window = Window(
                     self.window.top_left,
-                    FigureOrientation(self.shape + '_' + Orientation.R.name),
-                    self.grid
+                    FigureOrientation[self.shape + '_' + Orientation.R.name],
+                    self.window.grid
                         )
             case Direction.DOWN:
-                new_window = FigureWindow(
+                new_window = Window(
                     self.window.top_left,
-                    FigureOrientation(self.shape + '_' + Orientation.L.name),
-                    self.grid
+                    FigureOrientation[self.shape + '_' + Orientation.L.name],
+                    self.window.grid
                         )
         self.block_figure(new_window)
 
-    def block_figure(self, window: FigureWindow) -> bool:
+    def block_figure(self, window: Window) -> None:
         """Block cells for figure
         """
-        if self.is_valid_figure(window):
-            cells = window.map_window()
-            self.grid.clear_blocked()
-            [self.grid.grid[cell.x][cell.y].block() for cell in cells]
+        cells = window.map_window()
+        if self.is_valid_figure(cells):
+            self.window.grid.clear_blocked()
+            [self.window.grid.grid[cell.x][cell.y].block() for cell in cells]
             self.window = window
-            return True
-        return False
 
     def is_valid_figure(
         self,

@@ -12,6 +12,10 @@ class BaseEnum(Enum):
     def get_values(cls) -> list[int]:
         return [e.value for e in cls]
 
+    @classmethod
+    def get_includes(cls) -> list['BaseEnum']:
+        return [i for i in cls]
+
 
 class Direction(Enum):
     """Move or rotation directions
@@ -22,6 +26,7 @@ class Direction(Enum):
     DOWN = auto()
 
 
+# TODO: remove me
 class Shape(BaseEnum):
     """Block shape
     """
@@ -60,6 +65,7 @@ class CellPlace(BaseEnum):
     BOTTOM_RIGHT = 3
 
 
+# TODO: remove me
 class BlockOrientation(Enum):
     """All block orientation
 
@@ -111,7 +117,7 @@ class BlockOrientation(Enum):
     T_D = {(0, 1), (1, 1), (2, 1), (1, 0)}
 
 
-class FigureOrientation(Enum):
+class FigureOrientation(BaseEnum):
     """All figures orientation (by longest flat side faces)
     """
     # all orientations of figure I
@@ -295,3 +301,9 @@ class FigureOrientation(Enum):
         (False, False, False, False),
         (False, False, False, False),
             )
+
+ARRIVE_TOP = [(x, -4) for x in range(30)]
+ARRIVE_BOTTOM = [(x, 34) for x in range(30)]
+ARRIVE_LEFT = [(-4, y) for y in range(30)]
+ARRIVE_RIGHT = [(34, y) for y in range(30)]
+ARRIVE = ARRIVE_TOP + ARRIVE_BOTTOM + ARRIVE_LEFT + ARRIVE_RIGHT
