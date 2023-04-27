@@ -47,15 +47,6 @@ class CellState(BaseEnum):
     FR0ZEN = auto()
 
 
-class CellPlace(BaseEnum):
-    """Placement of cell
-    """
-    TOP_LEFT = auto()
-    TOP_RIGHT = auto()
-    BOTTOM_LEFT = auto()
-    BOTTOM_RIGHT = auto()
-
-
 class FigureOrientation(BaseEnum):
     """All figures orientation (by longest flat side faces)
     """
@@ -229,3 +220,8 @@ ARRIVE_BOTTOM = [(x, 34) for x in range(30)]
 ARRIVE_LEFT = [(-4, y) for y in range(30)]
 ARRIVE_RIGHT = [(34, y) for y in range(30)]
 ARRIVE = ARRIVE_TOP + ARRIVE_BOTTOM + ARRIVE_LEFT + ARRIVE_RIGHT
+
+LEFT_FREEZE_ZONE = {(16, y) for y in range(34)}
+RIGHT_FREEZE_ZONE = {(17, y) for y in range(34)}
+TOP_FREEZE_ZONE = {(x, 16) for x in range(34)}
+BOTTOM_FREEZE_ZONE = {(x, 17) for x in range(34)}

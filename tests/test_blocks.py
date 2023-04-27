@@ -1,11 +1,8 @@
 import pytest
-from typing import Callable
 from kektris.blocks import Cell, Grid, Figure, Window
 from kektris.constraints import (
-    CellPlace,
     FigureOrientation,
     Direction,
-    CellState,
         )
 
 
@@ -22,7 +19,7 @@ class TestCell:
     def cell(self) -> Cell:
         """Cell fixture
         """
-        return Cell(0, 0, CellPlace.TOP_LEFT)
+        return Cell(0, 0)
 
     def test_cell_position(self, cell: Cell) -> None:
         """Test cell position
@@ -47,23 +44,12 @@ class TestCell:
         assert not cell.is_frozen, 'wrong state'
         assert not cell.is_blocked, 'wrong state'
 
-    def test_cell_place(self, cell: Cell) -> None:
-        """Test cell place
-        """
-        assert cell.is_top_left, 'wrong place'
-        cell.place = CellPlace.TOP_RIGHT
-        assert cell.is_top_right, 'wrong place'
-        cell.place = CellPlace.BOTTOM_LEFT
-        assert cell.is_bottom_left, 'wrong place'
-        cell.place = CellPlace.BOTTOM_RIGHT
-        assert cell.is_bottom_right, 'wrong place'
-
     def test_cell_eq(self, cell: Cell) -> None:
         """Test cell equality
         """
-        another = Cell(0, 1, CellPlace.TOP_LEFT)
+        another = Cell(0, 1)
         assert cell != another, 'is equal'
-        another = Cell(0, 0, CellPlace.TOP_LEFT)
+        another = Cell(0, 0)
         assert cell == another, 'is not equal'
         assert not (cell == 'not cell'), 'wrong eq return'
 
@@ -76,19 +62,14 @@ class TestGrid:
         """Test Grid initialization
         """
         assert grid.cells == 34, 'wrong cells number'
-        assert grid.half == 17, 'wrong half cels number'
         assert isinstance(grid.grid, list), 'wtong grid type'
         assert len(grid.grid) == 34, 'wrong row number'
         assert len(grid.grid[0]) == 34, 'wrong col number'
         assert isinstance(grid.grid[0][0], Cell), 'wrong cell'
         assert grid.grid[0][0].pos == (0, 0), 'wrong cell pos'
-        assert grid.grid[0][0].is_top_left, 'wrong place'
         assert grid.grid[0][17].pos == (0, 17), 'wrong cell pos'
-        assert grid.grid[0][17].is_top_right, 'wrong place'
         assert grid.grid[17][0].pos == (17, 0), 'wrong cell pos'
-        assert grid.grid[17][0].is_bottom_left, 'wrong place'
         assert grid.grid[17][17].pos == (17, 17), 'wrong cell pos'
-        assert grid.grid[17][17].is_bottom_right, 'wrong place'
 
     def test_get_clear(self, grid: Grid) -> None:
         """Test get clear
@@ -191,7 +172,7 @@ class TestWindow:
         """Test get_window
         """
         window = Window((0, 0), FigureOrientation.I_L, grid, Direction.LEFT)
-        w = window._get_window()
+        w = window.get_window
         assert isinstance(w, list), 'wrong result type'
         assert len(w) == 4, 'wrong result len'
         assert isinstance(w[0], list), 'wrong inside type'
@@ -203,7 +184,7 @@ class TestWindow:
         """Test get_window ofboard from top left
         """
         window = Window((-1, -1), FigureOrientation.I_L, grid, Direction.LEFT)
-        w = window._get_window()
+        w = window.get_window
         assert w[0][0] == None, 'wrong ofgrid cell value'
         assert w[1][0] == None, 'wrong ofgrid cell value'
         assert w[0][1] == None, 'wrong ofgrid cell value'
@@ -213,7 +194,7 @@ class TestWindow:
         """Test get_window ofboard from bottom right
         """
         window = Window((33, 33), FigureOrientation.I_L, grid, Direction.LEFT)
-        w = window._get_window()
+        w = window.get_window
         assert w[1][0] == None, 'wrong ofgrid cell value'
         assert w[0][1] == None, 'wrong ofgrid cell value'
         assert w[0][0].pos == window.grid.grid[33][33].pos, 'wrong grid cell value'
@@ -222,7 +203,7 @@ class TestWindow:
         """Test msp window return cells
         """
         window = Window((0, 0), FigureOrientation.I_L, grid, Direction.LEFT)
-        m = window.map_window()
+        m = window.map_window
         assert isinstance(m, list), 'wrong result type'
         assert len(m) == 4, 'wrong result len'
         assert isinstance(m[0], Cell), 'wrong cell type'
@@ -233,7 +214,7 @@ class TestWindow:
         """Test msp window return cells with ofboard from top left
         """
         window = Window((-1, 0), FigureOrientation.I_U, grid, Direction.LEFT)
-        m = window.map_window()
+        m = window.map_window
         assert len(m) == 3, 'wrong result len'
         assert m[0].pos == grid.grid[0][1].pos, 'wrong figure'
         assert m[1].pos == grid.grid[1][1].pos, 'wrong figure'
@@ -242,9 +223,21 @@ class TestWindow:
         """Test msp window return cells with ofboard from ищеещь кшпре
         """
         window = Window((33, 31), FigureOrientation.I_U, grid, Direction.LEFT)
-        m = window.map_window()
+        m = window.map_window
         assert len(m) == 1, 'wrong result len'
         assert m[0].pos == grid.grid[33][32].pos, 'wrong figure'
+
+    def test_has_frozen(self, grid: Grid) -> None:
+        """Test has frozen mapped window
+
+        Args:
+            grid (Grid): _description_
+        """
+        window = Window((0, 0), FigureOrientation.I_L, grid, Direction.LEFT)
+        assert not window.has_frozen(), 'has frozen'
+        window = Window((0, 0), FigureOrientation.I_U, grid, Direction.LEFT)
+        window.grid.grid[1][1].freeze()
+        assert window.has_frozen(), 'not has frozen'
 
 
 class TestFigure:
@@ -265,18 +258,6 @@ class TestFigure:
         """
         return Figure(window)
 
-    @pytest.fixture(scope='function')
-    def mock_is_valid_figure(
-        self,
-        monkeypatch,
-        figure: Figure,
-            ) -> None:
-
-        def mock_return(*args, **kwargs) -> Callable:
-            return True
-
-        monkeypatch.setattr(figure, "is_valid_figure", mock_return)
-
     def test_figure_init(self, figure: Figure) -> None:
         """Test figure initialization
         """
@@ -285,17 +266,18 @@ class TestFigure:
     def test_is_valid_figure(self, figure: Figure) -> None:
         """Test is_valid_figure method
         """
-        cells = [Cell(0, 0, CellPlace.BOTTOM_LEFT, CellState.CLEAR)]
-        assert figure.is_valid_figure(cells), 'not valid'
-        cells.append(Cell(0, 0, CellPlace.BOTTOM_LEFT, CellState.FR0ZEN))
-        assert not figure.is_valid_figure(cells), 'valid'
-        cells.pop()
-        cells.append(Cell(0, 0, CellPlace.BOTTOM_LEFT, CellState.FR0ZEN))
-        assert not figure.is_valid_figure(cells), 'valid'
+        assert figure.is_valid_figure(figure.window), 'not valid'
+
+    def test_is_valid_figure_has_frozen(self, figure: Figure, grid: Grid) -> None:
+        """Test is_valid_figure method
+        """
+        grid.grid[1][1].freeze()
+        grid.grid[2][2].freeze()
+        grid.grid[3][3].freeze()
+        assert not figure.is_valid_figure(figure.window), 'valid'
 
     def test_block_figure(
         self,
-        mock_is_valid_figure: Callable,
         figure: Figure,
         window: Window,
             ) -> None:
@@ -306,7 +288,6 @@ class TestFigure:
 
     def test_clear_before_block(
         self,
-        mock_is_valid_figure: Callable,
         figure: Figure,
         window: Window,
             ) -> None:
@@ -316,6 +297,15 @@ class TestFigure:
         figure.block_figure(window)
         assert figure.window.grid.get_blocked, 'not blocked'
         assert figure.window.grid.grid[33][33].is_clear, 'not clear'
+
+    # TODO: rewrite me for all params
+    def test_is_ready_for_freeze_figure(self, grid: Grid) -> None:
+        """Test freeze figure
+        """
+        window = Window((16, 0), FigureOrientation.O, grid, Direction.LEFT)
+        figure = Figure(window)
+        figure.block_figure(figure.window)
+        assert figure.is_ready_for_freeze_figure(), 'wrong get blocked'
 
     @pytest.mark.parametrize(
         'direction,result', [
@@ -333,14 +323,14 @@ class TestFigure:
             ) -> None:
         """Test figure moving
         """
-        figure.move_figure(direction)
+        window = figure.move_figure(direction)
         if (direction == Direction.UP and figure.window.move_direction != Direction.DOWN) \
             or (direction == Direction.DOWN and figure.window.move_direction != Direction.UP) \
             or (direction == Direction.RIGHT and figure.window.move_direction != Direction.LEFT) \
             or (direction == Direction.LEFT and figure.window.move_direction != Direction.RIGHT):
-            assert figure.window.top_left == result, 'not moved'
+            assert window.top_left == result, 'not moved'
         else:
-            assert figure.window.top_left != result, 'moved to not accepted side'
+            assert not window, 'moved to not accepted side'
 
     def test_choose_orientation_raise_if_squire(self, grid: Grid) -> None:
         """Test choose orientation raise if squire
