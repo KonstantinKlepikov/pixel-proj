@@ -83,6 +83,10 @@ class Game:
         if self.paused:
             return
 
+        if self.figure.is_ready_for_freeze_figure():
+            self.grid.freeze_blocked()
+            self.figure = self.arrive_figure()
+
         move_direction = None
         rotate_direction = None
         if pyxel.btnp(pyxel.KEY_LEFT, 12, 2):
@@ -99,13 +103,29 @@ class Game:
             rotate_direction = Direction.RIGHT
 
         if move_direction:
-            self.figure.move_figure(move_direction)
+            window = self.figure.move_figure(move_direction)
+            if self.figure.is_valid_figure(window):
+                self.figure.block_figure(window)
+
         if rotate_direction:
-            self.figure.rotate_figure(rotate_direction)
+            window = self.figure.rotate_figure(rotate_direction)
+            if self.figure.is_valid_figure(window):
+                self.figure.block_figure(window)
 
         if self.frame_count_from_last_move == 45 - self.speed:
-            self.figure.move_figure(self.figure.window.move_direction)
+            window = self.figure.move_figure(self.figure.window.move_direction)
+            if self.figure.is_valid_figure(window):
+                self.figure.block_figure(window)
+            else:
+                self.grid.freeze_blocked()
+                self.figure = self.arrive_figure()
+
             self.frame_count_from_last_move = 0
+            return
+
+            # check is game end and stop iteration
+
+            # clear line
 
         self.frame_count_from_last_move += 1
 
@@ -163,10 +183,6 @@ class Game:
         #         self.grid[r] = [x for x in self.grid[r - 1]]
         #         self.grid_tile_colors[r] = [x for x in self.grid_tile_colors[r - 1]]
 
-
-    # TODO: check is need to freeze (move to grid)
-
-    # TODO: check is need to clear (move to grid)
 
     def _change_score(self) -> None:
         """Change score and set flash timeout

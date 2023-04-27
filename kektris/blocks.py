@@ -2,12 +2,15 @@ from kektris.constraints import (
     Direction,
     Orientation,
     CellState,
-    CellPlace,
     FigureOrientation,
     ARRIVE_TOP,
     ARRIVE_BOTTOM,
     ARRIVE_LEFT,
     ARRIVE_RIGHT,
+    RIGHT_FREEZE_ZONE,
+    LEFT_FREEZE_ZONE,
+    TOP_FREEZE_ZONE,
+    BOTTOM_FREEZE_ZONE,
         )
 from typing import TypeAlias, Optional
 
@@ -20,12 +23,10 @@ class Cell:
     def __init__(
         self, x: int,
         y: int,
-        place: CellPlace,
         state: CellState = CellState.CLEAR
             ) -> None:
         self.x = x
         self.y = y
-        self.place = place
         self.state = state
         self._pos = (x, y)
 
@@ -46,22 +47,6 @@ class Cell:
     @property
     def is_blocked(self) -> bool:
         return self.state == CellState.BLOCK
-
-    @property
-    def is_top_left(self) -> bool:
-        return self.place == CellPlace.TOP_LEFT
-
-    @property
-    def is_top_right(self) -> bool:
-        return self.place == CellPlace.TOP_RIGHT
-
-    @property
-    def is_bottom_left(self) -> bool:
-        return self.place == CellPlace.BOTTOM_LEFT
-
-    @property
-    def is_bottom_right(self) -> bool:
-        return self.place == CellPlace.BOTTOM_RIGHT
 
     def __hash__(self) -> int:
         return hash(self.pos)
@@ -94,29 +79,17 @@ class Grid:
     """This class represent a grid of cells
     """
     cells = 34
-    half = 17
 
     def __init__(self) -> None:
         self.grid: Cells = self._make_grid()
 
     def _make_grid(self) -> list[list[Cells]]:
-        # TODO: rewrite with list comprehensione
-        grid = []
-        for x in range(0, self.half):
-            row = []
-            for y in range(0, self.half):
-                row.append(Cell(x, y, place=CellPlace.TOP_LEFT))
-            for y in range(self.half, self.cells):
-                row.append(Cell(x, y, place=CellPlace.TOP_RIGHT))
-            grid.append(row)
-        for x in range(self.half, self.cells):
-            row = []
-            for y in range(0, self.half):
-                row.append(Cell(x, y, place=CellPlace.BOTTOM_LEFT))
-            for y in range(self.half, self.cells):
-                row.append(Cell(x, y, place=CellPlace.BOTTOM_RIGHT))
-            grid.append(row)
-        return grid
+        """Make grid matrix
+        """
+        return [
+            [Cell(x, y) for y in range(self.cells)]
+            for x in range(self.cells)
+                ]
 
     @property
     def get_clear(self) -> list[Cell]:
@@ -180,6 +153,8 @@ class Window:
             self.move_direction: Direction = self._set_move_direction(top_left)
         else:
             self.move_direction = move_direction
+        self._get_window: Optional[list[list[Cell | None]]] = None
+        self._map_window: Optional[list[Cell]] = None
 
     def _set_move_direction(self, top_left: tuple[int, int]) -> Direction:
         """Set move direction
@@ -195,25 +170,37 @@ class Window:
                 return Direction.UP
         raise ValueError
 
-    def _get_window(self) -> list[list[Cell | None]]:
+    @property
+    def get_window(self) -> list[list[Cell | None]]:
         """Get window of cells
         """
-        result = [[None, None, None, None] for _ in range(4)]
-        for row in range(4):
-            y = row + self.top_left[1]
-            for col in range(4):
-                x = col + self.top_left[0]
-                if (34 > x >= 0) and (34 > y >= 0):
-                    result[row][col] = self.grid.grid[x][y]
-        return result
+        if self._get_window is None:
+            self._get_window = [[None, None, None, None] for _ in range(4)]
+            for row in range(4):
+                y = row + self.top_left[1]
+                for col in range(4):
+                    x = col + self.top_left[0]
+                    if (34 > x >= 0) and (34 > y >= 0):
+                        self._get_window[row][col] = self.grid.grid[x][y]
+        return self._get_window
 
+    @property
     def map_window(self) -> list[Cell]:
         """Get mapped cell
         """
-        result = []
-        for maps, cells in zip(self.orientation.value, self._get_window()):
-            result.extend([cell for m, cell in zip(maps, cells) if cell and m])
-        return result
+        if self._map_window is None:
+            self._map_window = []
+            for maps, cells in zip(self.orientation.value, self.get_window):
+                self._map_window.extend([cell for m, cell in zip(maps, cells) if cell and m])
+        return self._map_window
+
+    def has_frozen(self) -> bool:
+        """Has figure frozen cells in mapped window
+        """
+        for cell in self.map_window:
+            if cell.is_frozen:
+                return True
+        return False
 
 
 class Figure:
@@ -228,7 +215,7 @@ class Figure:
         self.window = window
         self.shape = window.orientation.name[0]
 
-    def move_figure(self, direction: Direction) -> None:
+    def move_figure(self, direction: Direction) -> Optional[Window]:
         """Move a figure one step in a given direction
         """
         x, y = self.window.top_left
@@ -263,9 +250,9 @@ class Figure:
                         )
             case _, _:
                 return
-        self.block_figure(new_window)
+        return new_window
 
-    def rotate_figure(self, direction: Direction) -> None:
+    def rotate_figure(self, direction: Direction) -> Optional[Window]:
         """Rotates a figure in a given rotation side
         """
         if self.window.orientation == FigureOrientation.O:
@@ -279,7 +266,7 @@ class Figure:
             self.window.grid,
             self.window.move_direction
                 )
-        self.block_figure(new_window)
+        return new_window
 
     def _choose_orientation(self, direction: Direction) -> Orientation:
         """Choose orientation of figure after rotation
@@ -305,17 +292,37 @@ class Figure:
     def block_figure(self, window: Window) -> None:
         """Block cells for figure
         """
-        cells = window.map_window()
-        if self.is_valid_figure(cells):
-            self.window.grid.clear_blocked()
-            [self.window.grid.grid[cell.x][cell.y].block() for cell in cells]
-            self.window = window
+        cells = window.map_window
+        self.window.grid.clear_blocked()
+        [self.window.grid.grid[cell.x][cell.y].block() for cell in cells]
+        self.window = window
+
+    def is_ready_for_freeze_figure(self) -> bool:
+        """Freeze figure
+        """
+        positions = {pos.pos for pos in self.window.grid.get_blocked}
+        match self.window.move_direction:
+            case Direction.RIGHT:
+                diff = positions & LEFT_FREEZE_ZONE
+            case Direction.LEFT:
+                diff = positions & RIGHT_FREEZE_ZONE
+            case Direction.UP:
+                diff = positions & BOTTOM_FREEZE_ZONE
+            case Direction.DOWN:
+                diff = positions & TOP_FREEZE_ZONE
+            case _:
+                diff = set()
+        if diff:
+            return True
+        return False
 
     def is_valid_figure(
         self,
-        cells: list[Cell],
+        window: Optional[Window],
             ) -> bool:
         """"Returns true if all the tiles of the block are valid
         i.e. on the grid and doesn't occupy already filled tiles
         """
-        return all([not cell.is_frozen for cell in cells])
+        if window:
+            return not window.has_frozen()
+        return False
