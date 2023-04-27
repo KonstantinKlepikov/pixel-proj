@@ -6,3 +6,5 @@
 - 4 channels with 64 definable sounds
 - 8 musics which can combine arbitrary sounds
 - Keyboard, mouse, and gamepad inputs
+
+Typicaly: `pip install -e .[dev]`
