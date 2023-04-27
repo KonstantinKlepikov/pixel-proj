@@ -1,14 +1,15 @@
-import random
 from kektris.constraints import (
     Direction,
-    Shape,
     Orientation,
-    BlockOrientation,
     CellState,
     CellPlace,
-    FigureOrientation
+    FigureOrientation,
+    ARRIVE_TOP,
+    ARRIVE_BOTTOM,
+    ARRIVE_LEFT,
+    ARRIVE_RIGHT,
         )
-from typing import Optional, TypeAlias
+from typing import TypeAlias, Optional
 
 
 class Cell:
@@ -170,10 +171,29 @@ class Window:
         top_left: tuple[int, int],
         orientation: FigureOrientation,
         grid: Grid,
+        move_direction: Optional[Direction] = None,
             ) -> None:
         self.top_left = top_left
         self.orientation = orientation
         self.grid = grid
+        if not move_direction:
+            self.move_direction: Direction = self._set_move_direction(top_left)
+        else:
+            self.move_direction = move_direction
+
+    def _set_move_direction(self, top_left: tuple[int, int]) -> Direction:
+        """Set move direction
+        """
+        match top_left:
+            case _ if top_left in ARRIVE_LEFT:
+                return Direction.RIGHT
+            case _ if top_left in ARRIVE_RIGHT:
+                return Direction.LEFT
+            case _ if top_left in ARRIVE_TOP:
+                return Direction.DOWN
+            case _ if top_left in ARRIVE_BOTTOM:
+                return Direction.UP
+        raise ValueError
 
     def _get_window(self) -> list[list[Cell | None]]:
         """Get window of cells
@@ -212,62 +232,75 @@ class Figure:
         """Move a figure one step in a given direction
         """
         x, y = self.window.top_left
-        match direction:
-            case Direction.LEFT:
+        match direction, self.window.move_direction:
+            case Direction.LEFT, d if d != Direction.RIGHT:
                 new_window = Window(
                     (x-1, y),
                     self.window.orientation,
-                    self.window.grid
+                    self.window.grid,
+                    self.window.move_direction
                         )
-            case Direction.RIGHT:
+            case Direction.RIGHT, d if d != Direction.LEFT:
                 new_window = Window(
                     (x+1, y),
                     self.window.orientation,
-                    self.window.grid
+                    self.window.grid,
+                    self.window.move_direction
                         )
-            case Direction.UP:
+            case Direction.UP, d if d != Direction.DOWN:
                 new_window = Window(
                     (x, y-1),
                     self.window.orientation,
-                    self.window.grid
+                    self.window.grid,
+                    self.window.move_direction
                         )
-            case Direction.DOWN:
+            case Direction.DOWN, d if d != Direction.UP:
                 new_window = Window(
                     (x, y+1),
                     self.window.orientation,
-                    self.window.grid
+                    self.window.grid,
+                    self.window.move_direction
                         )
+            case _, _:
+                return
         self.block_figure(new_window)
 
     def rotate_figure(self, direction: Direction) -> None:
         """Rotates a figure in a given rotation side
         """
-        match direction:
-            case Direction.LEFT:
-                new_window = Window(
-                    self.window.top_left,
-                    FigureOrientation[self.shape + '_' + Orientation.U.name],
-                    self.window.grid
-                        )
-            case Direction.RIGHT:
-                new_window = Window(
-                    self.window.top_left,
-                    FigureOrientation[self.shape + '_' + Orientation.D.name],
-                    self.window.grid
-                        )
-            case Direction.UP:
-                new_window = Window(
-                    self.window.top_left,
-                    FigureOrientation[self.shape + '_' + Orientation.R.name],
-                    self.window.grid
-                        )
-            case Direction.DOWN:
-                new_window = Window(
-                    self.window.top_left,
-                    FigureOrientation[self.shape + '_' + Orientation.L.name],
-                    self.window.grid
-                        )
+        if self.window.orientation == FigureOrientation.O:
+            return
+
+        new_window = Window(
+            self.window.top_left,
+            FigureOrientation[
+                self.shape + '_' + self._choose_orientation(direction).name
+                    ],
+            self.window.grid,
+            self.window.move_direction
+                )
         self.block_figure(new_window)
+
+    def _choose_orientation(self, direction: Direction) -> Orientation:
+        """Choose orientation of figure after rotation
+        """
+        try:
+            orientation = self.window.orientation.name[2]
+        except IndexError:
+            raise ValueError('Is a squire! It havent orientation!')
+
+        ind = Orientation[orientation].value
+        match direction, ind:
+            case Direction.RIGHT, 4:
+                return Orientation(1)
+            case Direction.RIGHT, o if o < 4:
+                return Orientation(ind+1)
+            case Direction.LEFT, 1:
+                return Orientation(4)
+            case Direction.LEFT, o if o > 1:
+                return Orientation(ind-1)
+            case _:
+                raise ValueError('Wrong direction!')
 
     def block_figure(self, window: Window) -> None:
         """Block cells for figure
@@ -285,93 +318,4 @@ class Figure:
         """"Returns true if all the tiles of the block are valid
         i.e. on the grid and doesn't occupy already filled tiles
         """
-        return all([cell.is_clear for cell in cells])
-
-
-class Block:
-    """Kektris block with its current
-    orientation and position on the game grid
-    """
-
-    def __init__(self, shape: Optional[int] = None) -> None:
-        self.orientation = 0
-        if shape != None:
-            self.shape = shape
-        else:
-            self.shape = random.randint(0, 6)
-        self.position: tuple[int, int] = (0, 3)
-
-    def move_block(
-        self,
-        direction: Optional[Direction],
-        grid: list[int],
-            ) -> Optional[bool]:
-        """Move a block one step in a given direction
-        """
-        if direction == None:
-            return
-
-        if direction == Direction.LEFT:
-            new_position = (self.position[0], self.position[1] - 1)
-        elif direction == Direction.RIGHT:
-            new_position = (self.position[0], self.position[1] + 1)
-        elif direction == Direction.UP:
-            new_position = (self.position[0] - 1, self.position[1])
-        elif direction == Direction.DOWN:
-            new_position = (self.position[0] + 1, self.position[1])
-
-        if self.is_valid_block(
-            self.get_block_tiles(new_position, self.orientation), grid
-                ):
-            self.position = new_position
-            return True
-
-        return False
-
-    def rotate_block(
-        self,
-        direction: Optional[Direction],
-        grid: list[int],
-            ) -> Optional[bool]:
-        """Rotates a block in a given rotation side
-        """
-        if direction == None:
-            return
-
-        n_orient = (self.orientation + 1) % 4 if direction == Direction.RIGHT \
-            else (self.orientation - 1) % 4
-        if self.is_valid_block(
-            self.get_block_tiles(self.position, n_orient), grid
-                ):
-            self.orientation = n_orient
-            return True
-
-        return False
-
-    def is_valid_block(
-        self,
-        block_tiles: set[tuple],
-        grid: list[int],
-            ) -> bool:
-        """"Returns true if all the tiles of the block are valid
-        i.e. on the grid and doesn't occupy already filled tiles
-        """
-        for tile in block_tiles:
-            if not(0 <= tile[0] <= 21) \
-                    or not(0 <= tile[1] <= 9) \
-                    or grid[tile[0]][tile[1]] != 0:
-                return False
-        return True
-
-    def get_block_tiles(
-        self,
-        position: tuple[int, int],
-        orientation: int
-            ) -> set[tuple[int, int]]:
-        """Get oriented block
-        """
-        block_name = Shape(self.shape).name + '_' + Orientation(orientation).name
-        block_tiles = BlockOrientation[block_name].value
-        return {
-            (tile[0] + position[0], tile[1] + position[1]) for tile in block_tiles
-                }
+        return all([not cell.is_frozen for cell in cells])

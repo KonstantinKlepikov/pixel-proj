@@ -11,17 +11,17 @@ from kektris.constraints import (
 class Game:
     def __init__(self) -> None:
         pyxel.init(256, 256, title="Kektris")
-        pyxel.load('blocks.pyxres', image=True)
+        # pyxel.load('blocks.pyxres', image=True)
         self.reset()
         pyxel.run(self.update, self.draw)
 
     def reset(self) -> None:
         """Reset game state
         """
-        # Menyu parameters
+        # Menu parameters
         self.paused = True
         self.score = 0
-        self.speed = 0
+        self.speed = 0  # TODO: add speed grown logic
         self.score_color_timeout = 60
         self.speed_color_timeout = 60
 
@@ -29,6 +29,9 @@ class Game:
         self.grid: Grid = Grid()
         self.grid_higlight = False
         self.figure = self.arrive_figure()
+
+        # game
+        self.frame_count_from_last_move = 0
 
     def draw(self) -> None:
         """Draw current screen
@@ -82,7 +85,6 @@ class Game:
 
         move_direction = None
         rotate_direction = None
-        fall_center = False
         if pyxel.btnp(pyxel.KEY_LEFT, 12, 2):
             move_direction = Direction.LEFT
         elif pyxel.btnp(pyxel.KEY_RIGHT, 12, 2):
@@ -95,16 +97,17 @@ class Game:
             rotate_direction = Direction.LEFT
         elif pyxel.btnp(pyxel.KEY_C, 12, 20):
             rotate_direction = Direction.RIGHT
-        elif pyxel.btnp(pyxel.KEY_X, 12, 20):
-            fall_center = True
 
         if move_direction:
             self.figure.move_figure(move_direction)
         if rotate_direction:
             self.figure.rotate_figure(rotate_direction)
 
-        # FIXME: move random
-        self.figure.move_figure(Direction.DOWN)
+        if self.frame_count_from_last_move == 45 - self.speed:
+            self.figure.move_figure(self.figure.window.move_direction)
+            self.frame_count_from_last_move = 0
+
+        self.frame_count_from_last_move += 1
 
     def mark_grid(self) -> None:
         """Draw grid mark

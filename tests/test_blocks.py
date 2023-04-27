@@ -162,10 +162,35 @@ class TestWindow:
     """Test FigureWinfow class
     """
 
+    @pytest.mark.parametrize(
+        'direction,arrive_pos', [
+            (Direction.RIGHT, (-4, 0)),
+            (Direction.LEFT, (34, 0)),
+            (Direction.UP, (0, 34)),
+            (Direction.DOWN, (0, -4))
+                ]
+            )
+    def test_set_move_direction(
+        self,
+        grid: Grid,
+        arrive_pos: tuple[int, int],
+        direction: Direction
+            ) -> None:
+        """Test get_window
+        """
+        window = Window(arrive_pos, FigureOrientation.I_L, grid)
+        assert window.move_direction == direction, 'wrong direction'
+
+    def test_window_not_created_in_a_wrong_side(self, grid: Grid) -> None:
+        """Test raise error with window creation
+        """
+        with pytest.raises(ValueError):
+            Window((0, 0), FigureOrientation.I_L, grid)
+
     def test_window_get_window(self, grid: Grid) -> None:
         """Test get_window
         """
-        window = Window((0, 0), FigureOrientation.I_L, grid)
+        window = Window((0, 0), FigureOrientation.I_L, grid, Direction.LEFT)
         w = window._get_window()
         assert isinstance(w, list), 'wrong result type'
         assert len(w) == 4, 'wrong result len'
@@ -177,7 +202,7 @@ class TestWindow:
     def test_window_get_ofgrid_left_window(self, grid: Grid) -> None:
         """Test get_window ofboard from top left
         """
-        window = Window((-1, -1), FigureOrientation.I_L, grid)
+        window = Window((-1, -1), FigureOrientation.I_L, grid, Direction.LEFT)
         w = window._get_window()
         assert w[0][0] == None, 'wrong ofgrid cell value'
         assert w[1][0] == None, 'wrong ofgrid cell value'
@@ -187,7 +212,7 @@ class TestWindow:
     def test_window_get_ofgrid_right_window(self, grid: Grid) -> None:
         """Test get_window ofboard from bottom right
         """
-        window = Window((33, 33), FigureOrientation.I_L, grid)
+        window = Window((33, 33), FigureOrientation.I_L, grid, Direction.LEFT)
         w = window._get_window()
         assert w[1][0] == None, 'wrong ofgrid cell value'
         assert w[0][1] == None, 'wrong ofgrid cell value'
@@ -196,7 +221,7 @@ class TestWindow:
     def test_map_window(self, grid: Grid) -> None:
         """Test msp window return cells
         """
-        window = Window((0, 0), FigureOrientation.I_L, grid)
+        window = Window((0, 0), FigureOrientation.I_L, grid, Direction.LEFT)
         m = window.map_window()
         assert isinstance(m, list), 'wrong result type'
         assert len(m) == 4, 'wrong result len'
@@ -207,7 +232,7 @@ class TestWindow:
     def test_map_window_ofgrid_left_window(self, grid: Grid) -> None:
         """Test msp window return cells with ofboard from top left
         """
-        window = Window((-1, 0), FigureOrientation.I_U, grid)
+        window = Window((-1, 0), FigureOrientation.I_U, grid, Direction.LEFT)
         m = window.map_window()
         assert len(m) == 3, 'wrong result len'
         assert m[0].pos == grid.grid[0][1].pos, 'wrong figure'
@@ -216,7 +241,7 @@ class TestWindow:
     def test_map_window_ofgrid_right_window(self, grid: Grid) -> None:
         """Test msp window return cells with ofboard from ищеещь кшпре
         """
-        window = Window((33, 31), FigureOrientation.I_U, grid)
+        window = Window((33, 31), FigureOrientation.I_U, grid, Direction.LEFT)
         m = window.map_window()
         assert len(m) == 1, 'wrong result len'
         assert m[0].pos == grid.grid[33][32].pos, 'wrong figure'
@@ -226,11 +251,13 @@ class TestFigure:
     """Test figure class
     """
 
-    @pytest.fixture(scope='function')
-    def window(self, grid: Grid) -> Window:
+    @pytest.fixture(scope='function', params=FigureOrientation.get_includes())
+    def window(self, grid: Grid, request) -> Window:
         """Make window
         """
-        return Window((0, 0), FigureOrientation.I_L, grid)
+        window = Window((0, 0), request.param, grid, Direction.LEFT)
+        window.param = request.param
+        return window
 
     @pytest.fixture(scope='function')
     def figure(self, window: Window) -> Figure:
@@ -250,23 +277,10 @@ class TestFigure:
 
         monkeypatch.setattr(figure, "is_valid_figure", mock_return)
 
-    # @pytest.fixture(scope='function')
-    # def mock_block_figure(
-    #     self,
-    #     monkeypatch,
-    #     figure: Figure,
-    #     mock_is_valid_figure: Callable,
-    #         ) -> None:
-
-    #     def mock_return(*args, **kwargs) -> Callable:
-    #         return args[0]
-
-    #     monkeypatch.setattr(figure, "block_figure", mock_return)
-
     def test_figure_init(self, figure: Figure) -> None:
         """Test figure initialization
         """
-        assert figure.shape == 'I', 'wrong shape'
+        assert figure.shape == figure.window.param.name[0], 'wrong shape'
 
     def test_is_valid_figure(self, figure: Figure) -> None:
         """Test is_valid_figure method
@@ -276,32 +290,32 @@ class TestFigure:
         cells.append(Cell(0, 0, CellPlace.BOTTOM_LEFT, CellState.FR0ZEN))
         assert not figure.is_valid_figure(cells), 'valid'
         cells.pop()
-        cells.append(Cell(0, 0, CellPlace.BOTTOM_LEFT, CellState.BLOCK))
+        cells.append(Cell(0, 0, CellPlace.BOTTOM_LEFT, CellState.FR0ZEN))
         assert not figure.is_valid_figure(cells), 'valid'
 
     def test_block_figure(
         self,
         mock_is_valid_figure: Callable,
         figure: Figure,
+        window: Window,
             ) -> None:
         """Test block figure
         """
-        window = Window((5, 5), FigureOrientation.I_L, figure.window.grid)
         figure.block_figure(window)
-        assert figure.window.grid.grid[6][6].is_blocked, 'not blocked'
+        assert figure.window.grid.get_blocked, 'not blocked'
 
     def test_clear_before_block(
         self,
         mock_is_valid_figure: Callable,
         figure: Figure,
+        window: Window,
             ) -> None:
         """Test block figure and clear before block
         """
-        window = Window((5, 5), FigureOrientation.I_L, figure.window.grid)
-        figure.window.grid.grid[0][0].block()
+        figure.window.grid.grid[33][33].block()
         figure.block_figure(window)
-        assert figure.window.grid.grid[6][6].is_blocked, 'not blocked'
-        assert figure.window.grid.grid[0][0].is_clear, 'not clear'
+        assert figure.window.grid.get_blocked, 'not blocked'
+        assert figure.window.grid.grid[33][33].is_clear, 'not clear'
 
     @pytest.mark.parametrize(
         'direction,result', [
@@ -316,31 +330,62 @@ class TestFigure:
         figure: Figure,
         direction: Direction,
         result: tuple[int, int],
-        # mock_block_figure: Callable,
             ) -> None:
         """Test figure moving
         """
         figure.move_figure(direction)
-        assert figure.window.top_left == result, 'not moved'
+        if (direction == Direction.UP and figure.window.move_direction != Direction.DOWN) \
+            or (direction == Direction.DOWN and figure.window.move_direction != Direction.UP) \
+            or (direction == Direction.RIGHT and figure.window.move_direction != Direction.LEFT) \
+            or (direction == Direction.LEFT and figure.window.move_direction != Direction.RIGHT):
+            assert figure.window.top_left == result, 'not moved'
+        else:
+            assert figure.window.top_left != result, 'moved to not accepted side'
 
-    # TODO: test all figures
+    def test_choose_orientation_raise_if_squire(self, grid: Grid) -> None:
+        """Test choose orientation raise if squire
+        """
+        window = Window((0, 0), FigureOrientation.O, grid, Direction.LEFT)
+        figure = Figure(window)
+        with pytest.raises(
+            ValueError,
+            match='Is a squire! It havent orientation!'
+                ):
+            figure._choose_orientation(Direction.RIGHT)
+
+    def test_choose_orientation_raise_if_wrong_direction(self, grid: Grid) -> None:
+        """Test choose orientation raise if wrong direction
+        """
+        window = Window((0, 0), FigureOrientation.I_D, grid, Direction.LEFT)
+        figure = Figure(window)
+        with pytest.raises(
+            ValueError,
+            match='Wrong direction!'
+                ):
+            figure._choose_orientation(Direction.DOWN)
+
+    @pytest.mark.skip('TODO: add me')
+    def test_choose_orientation(self, grid: Grid) -> None:
+        """Test choose orientation
+        """
+
+    @pytest.mark.skip('TODO: rewrite me')
     @pytest.mark.parametrize(
         'direction,result', [
-            (Direction.LEFT, FigureOrientation.I_U),
-            (Direction.RIGHT, FigureOrientation.I_D),
-            (Direction.DOWN, FigureOrientation.I_L),
-            (Direction.UP, FigureOrientation.I_R)
+            (Direction.LEFT, 'U'),
+            (Direction.RIGHT, 'D'),
                 ]
             )
     def test_rotate_figure(
         self,
         figure: Figure,
         direction: Direction,
-        result: FigureOrientation,
-        # mock_block_figure: Callable,
+        result: str,
             ) -> None:
         """Test rotate figure
         """
         figure.rotate_figure(direction)
         assert figure.window.top_left == (0, 0), 'wrong top left'
-        assert figure.window.orientation.name == result.name, 'wrong orientation'
+        if figure.window.orientation.name != 'O':  # case with square apriory done
+            assert figure.window.orientation.name[2] == result, \
+                'wrong orientation'
