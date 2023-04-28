@@ -44,5 +44,5 @@ def make_app(monkeypatch, mock_app: Callable) -> Game:
     def mock_draw_figures(*args, **kwargs) -> Callable:
         return None
 
-    monkeypatch.setattr(Game, "draw_figures",mock_draw_figures)
+    monkeypatch.setattr(Game, "_draw_figures", mock_draw_figures)
     return Game()
