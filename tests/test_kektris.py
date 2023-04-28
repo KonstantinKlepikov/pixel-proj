@@ -31,7 +31,7 @@ class TestGame:
         """Test arrive figure
         """
         with FixedSeed(42):
-            figure = make_app.arrive_figure()
+            figure = make_app._arrive_figure()
             assert isinstance(figure, Figure), 'wrong figure move_direction'
             assert figure.window.top_left == (-4, 21), \
                 'wrong top left position'
