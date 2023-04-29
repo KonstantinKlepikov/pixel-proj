@@ -33,10 +33,10 @@ class Direction(Enum):
 class Orientation(BaseEnum):
     """Block orientation
     """
-    L = auto()
     U = auto()
-    R = auto()
+    L = auto()
     D = auto()
+    R = auto()
 
 
 class CellState(BaseEnum):
@@ -51,16 +51,22 @@ class FigureOrientation(BaseEnum):
     """All figures orientation (by longest flat side faces)
     """
     # all orientations of figure I
+    I_U = (
+        (False, False, False, False),
+        (True, True, True, True),
+        (False, False, False, False),
+        (False, False, False, False),
+            )
     I_L = (
         (False, True, False, False),
         (False, True, False, False),
         (False, True, False, False),
         (False, True, False, False),
             )
-    I_U = (
+    I_D = (
+        (False, False, False, False),
         (False, False, False, False),
         (True, True, True, True),
-        (False, False, False, False),
         (False, False, False, False),
             )
     I_R = (
@@ -68,12 +74,6 @@ class FigureOrientation(BaseEnum):
         (False, False, True, False),
         (False, False, True, False),
         (False, False, True, False),
-            )
-    I_D = (
-        (False, False, False, False),
-        (False, False, False, False),
-        (True, True, True, True),
-        (False, False, False, False),
             )
 
     # all orientations of figure O
@@ -85,13 +85,19 @@ class FigureOrientation(BaseEnum):
             )
 
     # all orientations of figure J
-    J_L = (
-        (False, True, False, False),
-        (False, True, False, False),
-        (False, True, True, False),
+    J_U = (
+        (True, False, False, False),
+        (True, True, True, False),
+        (False, False, False, False),
         (False, False, False, False),
             )
-    J_U = (
+    J_L = (
+        (False, True, True, False),
+        (False, True, False, False),
+        (False, True, False, False),
+        (False, False, False, False),
+            )
+    J_D = (
         (False, False, False, False),
         (True, True, True, False),
         (False, False, True, False),
@@ -103,24 +109,24 @@ class FigureOrientation(BaseEnum):
         (True, True, False, False),
         (False, False, False, False),
             )
-    J_D = (
-        (True, False, False, False),
+
+    # all orientations of figure L
+    L_U = (
+        (False, False, True, False),
         (True, True, True, False),
         (False, False, False, False),
         (False, False, False, False),
             )
-
-    # all orientations of figure L
     L_L = (
         (False, True, False, False),
         (False, True, False, False),
         (False, True, True, False),
         (False, False, False, False),
             )
-    L_U = (
+    L_D = (
         (False, False, False, False),
         (True, True, True, False),
-        (False, False, True, False),
+        (True, False, False, False),
         (False, False, False, False),
             )
     L_R = (
@@ -129,27 +135,15 @@ class FigureOrientation(BaseEnum):
         (False, True, False, False),
         (False, False, False, False),
             )
-    L_D = (
-        (True, False, False, False),
-        (True, True, True, False),
-        (False, False, False, False),
-        (False, False, False, False),
-            )
 
     # all orientations of figure S
-    S_L = (
-        (True, False, False, False),
-        (True, True, False, False),
-        (False, True, False, False),
-        (False, False, False, False),
-            )
     S_U = (
         (False, True, True, False),
         (True, True, False, False),
         (False, False, False, False),
         (False, False, False, False),
             )
-    S_R = (
+    S_L = (
         (False, True, False, False),
         (False, True, True, False),
         (False, False, True, False),
@@ -161,21 +155,21 @@ class FigureOrientation(BaseEnum):
         (True, True, False, False),
         (False, False, False, False),
             )
-
-    # all orientations of figure Z
-    Z_L = (
-        (False, True, False, False),
-        (True, True, False, False),
+    S_R = (
         (True, False, False, False),
+        (True, True, False, False),
+        (False, True, False, False),
         (False, False, False, False),
             )
+
+    # all orientations of figure Z
     Z_U = (
         (True, True, False, False),
         (False, True, True, False),
         (False, False, False, False),
         (False, False, False, False),
             )
-    Z_R = (
+    Z_L = (
         (False, False, True, False),
         (False, True, True, False),
         (False, True, False, False),
@@ -187,23 +181,23 @@ class FigureOrientation(BaseEnum):
         (False, True, True, False),
         (False, False, False, False),
             )
-
-    # all orientations of figure T
-    T_L = (
+    Z_R = (
         (False, True, False, False),
-        (False, True, True, False),
-        (False, True, False, False),
+        (True, True, False, False),
+        (True, False, False, False),
         (False, False, False, False),
             )
+
+    # all orientations of figure T
     T_U = (
         (False, False, False, False),
         (True, True, True, False),
         (False, True, False, False),
         (False, False, False, False),
             )
-    T_R = (
+    T_L = (
         (False, True, False, False),
-        (True, True, False, False),
+        (False, True, True, False),
         (False, True, False, False),
         (False, False, False, False),
             )
@@ -211,6 +205,12 @@ class FigureOrientation(BaseEnum):
         (False, True, False, False),
         (True, True, True, False),
         (False, False, False, False),
+        (False, False, False, False),
+            )
+    T_R = (
+        (False, True, False, False),
+        (True, True, False, False),
+        (False, True, False, False),
         (False, False, False, False),
             )
 

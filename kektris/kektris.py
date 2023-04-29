@@ -1,6 +1,7 @@
 import pyxel
 import random
-from kektris.blocks import Grid, Figure, Window
+from typing import Optional
+from kektris.blocks import Grid, Figure, Window, Cell
 from kektris.constraints import (
     Direction,
     FigureOrientation,
@@ -32,6 +33,7 @@ class Game:
 
         # game
         self.frame_count_from_last_move = 0
+        self.clear_lenght = 6
 
     def draw(self) -> None:
         """Draw current screen
@@ -107,9 +109,9 @@ class Game:
             self.frame_count_from_last_move = 0
             return
 
-            # check is game end and stop iteration
+        self._clear_rows()
 
-            # clear line
+        # check is game end and stop iteration
 
         self.frame_count_from_last_move += 1
 
@@ -197,23 +199,81 @@ class Game:
                 if cell.is_frozen:
                     pyxel.rect(x, y, 5, 5, 7)
 
-    # TODO: rewrite this in Grid class
-    def clear_rows(self) -> None:
+    # TODO: remove me
+    def _is_line_grown(self, i: list[int]) -> bool:
+        """Check is line monotonic grown
+        """
+        if len(i) >= 2:
+            a = i.pop()
+            b = i[-1]
+            if a - b == 1:
+                return(self._is_line_grown(i))
+            else:
+                return False
+        return True
+
+    def _get_chunked(
+        self,
+        line: list[int],
+        chunked: list[list[int]]
+            ) -> tuple[list, list[list[int]]]:
+        """Separate line to chunked lines
+        """
+        chunk = []
+        while line:
+            a = line.pop()
+            if chunk:
+                if chunk[-1] - a == 1:
+                    chunk.append(a)
+                else:
+                    line.append(a)
+                    line, chunked = self._get_chunked(line, chunked)
+            else:
+                chunk.append(a)
+        chunked.append(chunk)
+        return line, chunked
+
+    def _check_line(
+        self,
+        dimension: int,
+        frozen_pos: list[tuple[int, int]]
+        ) -> Optional[list[tuple[int, int]]]:
+        """Check is line ready to clear
+        """
+        s_d = 0 if dimension else 1
+        comparison = [c[dimension] for c in frozen_pos]
+        min_ = min(comparison)
+        max_ = max(comparison) + 1
+        for n in range(min_, max_):
+            line = [pos for pos in frozen_pos if pos[dimension] == n]
+            if len(line) >= self.clear_lenght:
+                l_comparison = sorted([pos[s_d] for pos in line])
+                _, chunked = self._get_chunked(l_comparison, [])
+                to_clear = [
+                    n for chunk in chunked
+                    for n in chunk
+                    if len(chunk) >= self.clear_lenght
+                        ]
+                if to_clear:
+                    return [pos for pos in line if pos[s_d] in to_clear]
+
+    def _move_frozen(self) -> None:
+        """Move frozen rows after clear
+        """
+
+    def _clear_rows(self) -> None:
         """Clear filled row
         """
-        # rows_to_clear = []
-        # for row in range(2, 34):
-        #     if sum(self.grid[row]) == 10:
-        #         rows_to_clear.append(row)
-        # if len(rows_to_clear) < 4:
-        #     self.score += (100 * len(rows_to_clear))
-        # else:
-        #     self.score += 800
-        # for row in rows_to_clear:
-        #     for r in range(row, 1, -1):
-        #         self.grid[r] = [x for x in self.grid[r - 1]]
-        #         self.grid_tile_colors[r] = [x for x in self.grid_tile_colors[r - 1]]
-
+        frozen = self.grid.get_frozen
+        if len(frozen) >= self.clear_lenght:
+            frozen_pos = [cell.pos for cell in frozen]
+            for dim in [0, 1]:
+                line = self._check_line(dim, frozen_pos)
+                if line:
+                    for pos in line:
+                        self.grid.grid[pos[0]][pos[1]].clear()
+                    self._clear_rows()
+                    self._move_frozen()
 
     def _change_score(self) -> None:
         """Change score and set flash timeout
