@@ -1,7 +1,7 @@
 import pyxel
 import random
 from typing import Optional
-from kektris.blocks import Grid, Figure, Window, Cell
+from kektris.blocks import Grid, Figure, Window
 from kektris.constraints import (
     Direction,
     FigureOrientation,
@@ -33,7 +33,7 @@ class Game:
 
         # game
         self.frame_count_from_last_move = 0
-        self.clear_lenght = 6
+        self.clear_lenght = 8
 
     def draw(self) -> None:
         """Draw current screen
@@ -75,17 +75,17 @@ class Game:
 
         move_direction = None
         rotate_direction = None
-        if pyxel.btnp(pyxel.KEY_A, 12, 2):
+        if pyxel.btnp(pyxel.KEY_LEFT, 12, 2):
             move_direction = Direction.LEFT
-        elif pyxel.btnp(pyxel.KEY_D, 12, 2):
+        elif pyxel.btnp(pyxel.KEY_RIGHT, 12, 2):
             move_direction = Direction.RIGHT
-        elif pyxel.btnp(pyxel.KEY_S, 12, 2):
+        elif pyxel.btnp(pyxel.KEY_DOWN, 12, 2):
             move_direction = Direction.DOWN
-        elif pyxel.btnp(pyxel.KEY_W, 12, 2):
+        elif pyxel.btnp(pyxel.KEY_UP, 12, 2):
             move_direction = Direction.UP
-        elif pyxel.btnp(pyxel.KEY_K, 12, 20):
+        elif pyxel.btnp(pyxel.KEY_Z, 12, 20):
             rotate_direction = Direction.LEFT
-        elif pyxel.btnp(pyxel.KEY_L, 12, 20):
+        elif pyxel.btnp(pyxel.KEY_X, 12, 20):
             rotate_direction = Direction.RIGHT
 
         if move_direction:
@@ -125,12 +125,12 @@ class Game:
         pyxel.rectb(28, 235, 13, 13, 12)
         pyxel.rectb(42, 235, 13, 13, 12)
 
-        pyxel.text(19, 224, "K", 1)
-        pyxel.text(33, 223, "W", 12)
-        pyxel.text(47, 224, "L", 1)
-        pyxel.text(19, 239, "A", 12)
-        pyxel.text(33, 239, "S", 12)
-        pyxel.text(47, 239, "D", 12)
+        pyxel.text(19, 224, "Z", 1)
+        pyxel.text(33, 223, "^", 12)
+        pyxel.text(47, 224, "W", 1)
+        pyxel.text(19, 239, "<", 12)
+        pyxel.text(33, 239, "v", 12)
+        pyxel.text(47, 239, ">", 12)
 
         pyxel.rectb(62, 220, 13, 13, 8)
         pyxel.text(67, 224, "T", 8)
@@ -157,11 +157,21 @@ class Game:
         pyxel.text(219, 50, "SPEED", 10)
         pyxel.text(219, 60, str(self.speed), self._set_color("speed_color_timeout"))
 
+        pyxel.text(219, 80, "LINE", 10)
+        pyxel.text(219, 90, str(self.clear_lenght), 12)
+
     def _mark_grid(self) -> None:
         """Draw grid mark
         """
-        pyxel.line(112, 10, 112, 214, 15)
-        pyxel.line(10, 112, 214, 112, 15)
+        match self.figure.window.move_direction:
+            case Direction.RIGHT | Direction.LEFT:
+                color = (15, pyxel.frame_count % 8)
+            case Direction.DOWN | Direction.UP:
+                color = (pyxel.frame_count % 8, 15)
+            case _:
+                color = (15, 15)
+        pyxel.line(112, 10, 112, 214, color[1])
+        pyxel.line(10, 112, 214, 112, color[0])
 
         if self.grid_higlight:
             for p in range(10, 217, 6):
