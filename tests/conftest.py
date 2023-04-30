@@ -3,6 +3,7 @@ import random
 import pyxel
 from typing import Callable
 from kektris.kektris import Game
+from kektris.blocks import Grid
 
 
 class FixedSeed:
@@ -46,3 +47,7 @@ def make_app(monkeypatch, mock_app: Callable) -> Game:
 
     monkeypatch.setattr(Game, "_draw_figures", mock_draw_figures)
     return Game()
+
+@pytest.fixture(scope='function')
+def grid() -> Grid:
+    return Grid()

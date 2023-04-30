@@ -225,3 +225,8 @@ LEFT_FREEZE_ZONE = {(16, y) for y in range(34)}
 RIGHT_FREEZE_ZONE = {(17, y) for y in range(34)}
 TOP_FREEZE_ZONE = {(x, 16) for x in range(34)}
 BOTTOM_FREEZE_ZONE = {(x, 17) for x in range(34)}
+
+LEFT_QUARTER = [(x, y) for x in range(17) for y in range(34)]
+RIGHT_QUARTER = [(x, y) for x in range(17, 34) for y in range(34)]
+BOTTOM_QUARTER = [(x, y) for x in range(34) for y in range(17, 34)]
+TOP_QUARTER = [(x, y) for x in range(34) for y in range(17)]

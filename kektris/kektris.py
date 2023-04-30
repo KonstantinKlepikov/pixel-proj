@@ -1,11 +1,15 @@
 import pyxel
 import random
 from typing import Optional
-from kektris.blocks import Grid, Figure, Window
+from kektris.blocks import Grid, Figure, Window, Cell
 from kektris.constraints import (
     Direction,
     FigureOrientation,
     ARRIVE,
+    LEFT_QUARTER,
+    RIGHT_QUARTER,
+    TOP_QUARTER,
+    BOTTOM_QUARTER,
         )
 
 
@@ -92,16 +96,19 @@ class Game:
             window = self.figure.move_figure(move_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
+                self.figure.set_cells_move_direction()
 
         if rotate_direction:
             window = self.figure.rotate_figure(rotate_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
+                self.figure.set_cells_move_direction()
 
         if self.frame_count_from_last_move == 45 - self.speed:
             window = self.figure.move_figure(self.figure.window.move_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
+                self.figure.set_cells_move_direction()
             else:
                 self.grid.freeze_blocked()
                 self.figure = self._arrive_figure()
@@ -209,19 +216,6 @@ class Game:
                 if cell.is_frozen:
                     pyxel.rect(x, y, 5, 5, 7)
 
-    # TODO: remove me
-    def _is_line_grown(self, i: list[int]) -> bool:
-        """Check is line monotonic grown
-        """
-        if len(i) >= 2:
-            a = i.pop()
-            b = i[-1]
-            if a - b == 1:
-                return(self._is_line_grown(i))
-            else:
-                return False
-        return True
-
     def _get_chunked(
         self,
         line: list[int],
@@ -267,9 +261,36 @@ class Game:
                 if to_clear:
                     return [pos for pos in line if pos[s_d] in to_clear]
 
-    def _move_frozen(self) -> None:
+    def _move_frozen(self, frozen_to_move: list[Cell]) -> None:
         """Move frozen rows after clear
         """
+        match self.figure.window.move_direction:
+            case Direction.RIGHT:
+                candidates = [self.grid.grid[cell.x+1][cell.y] for cell in frozen_to_move]
+                quarter = LEFT_QUARTER
+            case Direction.LEFT:
+                candidates = [self.grid.grid[cell.x-1][cell.y] for cell in frozen_to_move]
+                quarter = RIGHT_QUARTER
+            case Direction.UP:
+                candidates = [self.grid.grid[cell.x][cell.y-1] for cell in frozen_to_move]
+                quarter = BOTTOM_QUARTER
+            case Direction.DOWN:
+                candidates = [self.grid.grid[cell.x][cell.y+1] for cell in frozen_to_move]
+                quarter = TOP_QUARTER
+        count = 0
+        for new_, old in zip(candidates, frozen_to_move):
+            if not new_.is_frozen and new_.pos in quarter:
+                old.clear()
+                new_.freeze()
+                new_.move_direction = self.figure.window.move_direction
+                count += 1
+        if count:
+            frozen_to_move = [
+                cell for cell
+                in self.grid.get_frozen
+                if cell.move_direction == self.figure.window.move_direction
+                    ]
+            self._move_frozen(frozen_to_move)
 
     def _clear_rows(self) -> None:
         """Clear filled row
@@ -283,7 +304,12 @@ class Game:
                     for pos in line:
                         self.grid.grid[pos[0]][pos[1]].clear()
                     self._clear_rows()
-                    self._move_frozen()
+                    frozen_to_move = [
+                        cell for cell
+                        in self.grid.get_frozen
+                        if cell.move_direction == self.figure.window.move_direction
+                            ]
+                    self._move_frozen(frozen_to_move)
 
     def _change_score(self) -> None:
         """Change score and set flash timeout

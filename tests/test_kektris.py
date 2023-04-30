@@ -1,7 +1,7 @@
 import pytest
 from kektris.kektris import Game
-from kektris.blocks import Grid, Figure
-from kektris.constraints import FigureOrientation
+from kektris.blocks import Grid, Figure, Window
+from kektris.constraints import FigureOrientation, Direction
 from conftest import FixedSeed
 
 
@@ -37,13 +37,6 @@ class TestGame:
                 'wrong top left position'
             assert figure.window.orientation == FigureOrientation.I_R, \
                 'wrong orientation'
-
-    # TODO: remove me
-    def test_is_line_grown(self, make_app: Game) -> None:
-        """Test is line monotonic grown
-        """
-        assert make_app._is_line_grown([1, 2, 3, 4, 5]), 'not grown'
-        assert not make_app._is_line_grown([1, 2, 3, 5]), 'grown'
 
     def test_get_chunked(self, make_app: Game) -> None:
         """Test get chunked
@@ -101,3 +94,20 @@ class TestGame:
         assert isinstance(line[0], tuple), 'wrong pos'
         assert len(line) == 12, 'wrong line lenght'
         assert frozen_pos[0:12] == line, 'wrong comparison'
+
+    # FIXME: rewrite ambiculous
+    def test_move_frozen(self, make_app: Game, grid: Grid) -> None:
+        """Test move frozen
+        """
+        window = Window((0, 0), FigureOrientation.J_L, grid, Direction.RIGHT)
+        make_app.grid = grid
+        make_app.figure = Figure(window)
+        make_app.figure.block_figure(window)
+        make_app.figure.set_cells_move_direction()
+        make_app.figure.window.grid.freeze_blocked()
+        frozen_to_move = make_app.grid.get_frozen
+        make_app._move_frozen(frozen_to_move)
+        result = make_app.grid.get_frozen
+        assert len(result) == 4, 'wrong len of frozen'
+        assert [cell.pos for cell in result] == [(15,0),(16,0),(16,1),(16,2)], \
+            'wrong result'
