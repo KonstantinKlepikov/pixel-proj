@@ -1,10 +1,15 @@
 import pyxel
 import random
-from kektris.blocks import Grid, Figure, Window
+from typing import Optional
+from kektris.blocks import Grid, Figure, Window, Cell
 from kektris.constraints import (
     Direction,
     FigureOrientation,
     ARRIVE,
+    LEFT_QUARTER,
+    RIGHT_QUARTER,
+    TOP_QUARTER,
+    BOTTOM_QUARTER,
         )
 
 
@@ -32,6 +37,7 @@ class Game:
 
         # game
         self.frame_count_from_last_move = 0
+        self.clear_lenght = 8
 
     def draw(self) -> None:
         """Draw current screen
@@ -73,33 +79,36 @@ class Game:
 
         move_direction = None
         rotate_direction = None
-        if pyxel.btnp(pyxel.KEY_A, 12, 2):
+        if pyxel.btnp(pyxel.KEY_LEFT, 12, 2):
             move_direction = Direction.LEFT
-        elif pyxel.btnp(pyxel.KEY_D, 12, 2):
+        elif pyxel.btnp(pyxel.KEY_RIGHT, 12, 2):
             move_direction = Direction.RIGHT
-        elif pyxel.btnp(pyxel.KEY_S, 12, 2):
+        elif pyxel.btnp(pyxel.KEY_DOWN, 12, 2):
             move_direction = Direction.DOWN
-        elif pyxel.btnp(pyxel.KEY_W, 12, 2):
+        elif pyxel.btnp(pyxel.KEY_UP, 12, 2):
             move_direction = Direction.UP
-        elif pyxel.btnp(pyxel.KEY_K, 12, 20):
+        elif pyxel.btnp(pyxel.KEY_Z, 12, 20):
             rotate_direction = Direction.LEFT
-        elif pyxel.btnp(pyxel.KEY_L, 12, 20):
+        elif pyxel.btnp(pyxel.KEY_X, 12, 20):
             rotate_direction = Direction.RIGHT
 
         if move_direction:
             window = self.figure.move_figure(move_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
+                self.figure.set_cells_move_direction()
 
         if rotate_direction:
             window = self.figure.rotate_figure(rotate_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
+                self.figure.set_cells_move_direction()
 
         if self.frame_count_from_last_move == 45 - self.speed:
             window = self.figure.move_figure(self.figure.window.move_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
+                self.figure.set_cells_move_direction()
             else:
                 self.grid.freeze_blocked()
                 self.figure = self._arrive_figure()
@@ -107,9 +116,9 @@ class Game:
             self.frame_count_from_last_move = 0
             return
 
-            # check is game end and stop iteration
+        self._clear_rows()
 
-            # clear line
+        # check is game end and stop iteration
 
         self.frame_count_from_last_move += 1
 
@@ -123,12 +132,12 @@ class Game:
         pyxel.rectb(28, 235, 13, 13, 12)
         pyxel.rectb(42, 235, 13, 13, 12)
 
-        pyxel.text(19, 224, "K", 1)
-        pyxel.text(33, 223, "W", 12)
-        pyxel.text(47, 224, "L", 1)
-        pyxel.text(19, 239, "A", 12)
-        pyxel.text(33, 239, "S", 12)
-        pyxel.text(47, 239, "D", 12)
+        pyxel.text(19, 224, "Z", 1)
+        pyxel.text(33, 223, "^", 12)
+        pyxel.text(47, 224, "W", 1)
+        pyxel.text(19, 239, "<", 12)
+        pyxel.text(33, 239, "v", 12)
+        pyxel.text(47, 239, ">", 12)
 
         pyxel.rectb(62, 220, 13, 13, 8)
         pyxel.text(67, 224, "T", 8)
@@ -155,11 +164,21 @@ class Game:
         pyxel.text(219, 50, "SPEED", 10)
         pyxel.text(219, 60, str(self.speed), self._set_color("speed_color_timeout"))
 
+        pyxel.text(219, 80, "LINE", 10)
+        pyxel.text(219, 90, str(self.clear_lenght), 12)
+
     def _mark_grid(self) -> None:
         """Draw grid mark
         """
-        pyxel.line(112, 10, 112, 214, 15)
-        pyxel.line(10, 112, 214, 112, 15)
+        match self.figure.window.move_direction:
+            case Direction.RIGHT | Direction.LEFT:
+                color = (15, pyxel.frame_count % 8)
+            case Direction.DOWN | Direction.UP:
+                color = (pyxel.frame_count % 8, 15)
+            case _:
+                color = (15, 15)
+        pyxel.line(112, 10, 112, 214, color[1])
+        pyxel.line(10, 112, 214, 112, color[0])
 
         if self.grid_higlight:
             for p in range(10, 217, 6):
@@ -197,23 +216,100 @@ class Game:
                 if cell.is_frozen:
                     pyxel.rect(x, y, 5, 5, 7)
 
-    # TODO: rewrite this in Grid class
-    def clear_rows(self) -> None:
+    def _get_chunked(
+        self,
+        line: list[int],
+        chunked: list[list[int]]
+            ) -> tuple[list, list[list[int]]]:
+        """Separate line to chunked lines
+        """
+        chunk = []
+        while line:
+            a = line.pop()
+            if chunk:
+                if chunk[-1] - a == 1:
+                    chunk.append(a)
+                else:
+                    line.append(a)
+                    line, chunked = self._get_chunked(line, chunked)
+            else:
+                chunk.append(a)
+        chunked.append(chunk)
+        return line, chunked
+
+    def _check_line(
+        self,
+        dimension: int,
+        frozen_pos: list[tuple[int, int]]
+        ) -> Optional[list[tuple[int, int]]]:
+        """Check is line ready to clear
+        """
+        s_d = 0 if dimension else 1
+        comparison = [c[dimension] for c in frozen_pos]
+        min_ = min(comparison)
+        max_ = max(comparison) + 1
+        for n in range(min_, max_):
+            line = [pos for pos in frozen_pos if pos[dimension] == n]
+            if len(line) >= self.clear_lenght:
+                l_comparison = sorted([pos[s_d] for pos in line])
+                _, chunked = self._get_chunked(l_comparison, [])
+                to_clear = [
+                    n for chunk in chunked
+                    for n in chunk
+                    if len(chunk) >= self.clear_lenght
+                        ]
+                if to_clear:
+                    return [pos for pos in line if pos[s_d] in to_clear]
+
+    def _move_frozen(self, frozen_to_move: list[Cell]) -> None:
+        """Move frozen rows after clear
+        """
+        match self.figure.window.move_direction:
+            case Direction.RIGHT:
+                candidates = [self.grid.grid[cell.x+1][cell.y] for cell in frozen_to_move]
+                quarter = LEFT_QUARTER
+            case Direction.LEFT:
+                candidates = [self.grid.grid[cell.x-1][cell.y] for cell in frozen_to_move]
+                quarter = RIGHT_QUARTER
+            case Direction.UP:
+                candidates = [self.grid.grid[cell.x][cell.y-1] for cell in frozen_to_move]
+                quarter = BOTTOM_QUARTER
+            case Direction.DOWN:
+                candidates = [self.grid.grid[cell.x][cell.y+1] for cell in frozen_to_move]
+                quarter = TOP_QUARTER
+        count = 0
+        for new_, old in zip(candidates, frozen_to_move):
+            if not new_.is_frozen and new_.pos in quarter:
+                old.clear()
+                new_.freeze()
+                new_.move_direction = self.figure.window.move_direction
+                count += 1
+        if count:
+            frozen_to_move = [
+                cell for cell
+                in self.grid.get_frozen
+                if cell.move_direction == self.figure.window.move_direction
+                    ]
+            self._move_frozen(frozen_to_move)
+
+    def _clear_rows(self) -> None:
         """Clear filled row
         """
-        # rows_to_clear = []
-        # for row in range(2, 34):
-        #     if sum(self.grid[row]) == 10:
-        #         rows_to_clear.append(row)
-        # if len(rows_to_clear) < 4:
-        #     self.score += (100 * len(rows_to_clear))
-        # else:
-        #     self.score += 800
-        # for row in rows_to_clear:
-        #     for r in range(row, 1, -1):
-        #         self.grid[r] = [x for x in self.grid[r - 1]]
-        #         self.grid_tile_colors[r] = [x for x in self.grid_tile_colors[r - 1]]
-
+        frozen = self.grid.get_frozen
+        if len(frozen) >= self.clear_lenght:
+            frozen_pos = [cell.pos for cell in frozen]
+            for dim in [0, 1]:
+                line = self._check_line(dim, frozen_pos)
+                if line:
+                    for pos in line:
+                        self.grid.grid[pos[0]][pos[1]].clear()
+                    self._clear_rows()
+                    frozen_to_move = [
+                        cell for cell
+                        in self.grid.get_frozen
+                        if cell.move_direction == self.figure.window.move_direction
+                            ]
+                    self._move_frozen(frozen_to_move)
 
     def _change_score(self) -> None:
         """Change score and set flash timeout

@@ -6,11 +6,6 @@ from kektris.constraints import (
         )
 
 
-@pytest.fixture(scope='function')
-def grid() -> Grid:
-    return Grid()
-
-
 class TestCell:
     """Test Cell class
     """
@@ -285,6 +280,17 @@ class TestFigure:
         """
         figure.block_figure(window)
         assert figure.window.grid.get_blocked, 'not blocked'
+
+    def test_set_cells_move_direction(self, figure: Figure) -> None:
+        """Test set move direction for every cell
+        """
+        cells = figure.window.map_window
+        for cell in cells:
+            assert cell.move_direction is None, 'has direction'
+        figure.block_figure(figure.window)
+        figure.set_cells_move_direction()
+        for cell in cells:
+            assert cell.move_direction == figure.window.move_direction, 'hasnt direction'
 
     def test_clear_before_block(
         self,
