@@ -230,3 +230,7 @@ LEFT_QUARTER = [(x, y) for x in range(17) for y in range(34)]
 RIGHT_QUARTER = [(x, y) for x in range(17, 34) for y in range(34)]
 BOTTOM_QUARTER = [(x, y) for x in range(34) for y in range(17, 34)]
 TOP_QUARTER = [(x, y) for x in range(34) for y in range(17)]
+
+PRIZE_BY_CLEAR = 10
+COLOR_TIMOUT = 60
+CLEAR_LENGTH = 7
