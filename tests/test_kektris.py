@@ -111,3 +111,13 @@ class TestGame:
         assert len(result) == 4, 'wrong len of frozen'
         assert [cell.pos for cell in result] == [(15,0),(16,0),(16,1),(16,2)], \
             'wrong result'
+
+    def test_change_speed(self, make_app: Game) -> None:
+        """Test change speed
+        """
+        make_app._change_speed()
+        assert make_app.speed == 0, 'mistaken grown'
+        make_app.score = 1000
+        make_app._change_speed()
+        assert make_app.speed == 1, 'not grown'
+        assert make_app.speed_color_timeout == 60, 'wrong timout'

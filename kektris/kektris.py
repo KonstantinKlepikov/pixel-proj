@@ -10,6 +10,9 @@ from kektris.constraints import (
     RIGHT_QUARTER,
     TOP_QUARTER,
     BOTTOM_QUARTER,
+    PRIZE_BY_CLEAR,
+    COLOR_TIMOUT,
+    CLEAR_LENGTH,
         )
 
 
@@ -26,9 +29,9 @@ class Game:
         # menu parameters
         self.paused = True
         self.score = 0
-        self.speed = 0  # TODO: add speed grown logic
-        self.score_color_timeout = 60
-        self.speed_color_timeout = 60
+        self.speed = 0
+        self.score_color_timeout = COLOR_TIMOUT
+        self.speed_color_timeout = COLOR_TIMOUT
 
         # grid
         self.grid: Grid = Grid()
@@ -37,7 +40,6 @@ class Game:
 
         # game
         self.frame_count_from_last_move = 0
-        self.clear_lenght = 8
 
     def draw(self) -> None:
         """Draw current screen
@@ -153,7 +155,7 @@ class Game:
 
         pyxel.rectb(177, 220, 13, 13, 12)
         pyxel.text(182, 224, "G", self._hide_reveal(self.grid_higlight))
-        pyxel.text(192, 224, "greed", 12)
+        pyxel.text(192, 224, "grid", 12)
 
     def _draw_aside(self) -> None:
         """Draw aside parameters
@@ -165,7 +167,7 @@ class Game:
         pyxel.text(219, 60, str(self.speed), self._set_color("speed_color_timeout"))
 
         pyxel.text(219, 80, "LINE", 10)
-        pyxel.text(219, 90, str(self.clear_lenght), 12)
+        pyxel.text(219, 90, str(CLEAR_LENGTH), 12)
 
     def _mark_grid(self) -> None:
         """Draw grid mark
@@ -250,13 +252,13 @@ class Game:
         max_ = max(comparison) + 1
         for n in range(min_, max_):
             line = [pos for pos in frozen_pos if pos[dimension] == n]
-            if len(line) >= self.clear_lenght:
+            if len(line) >= CLEAR_LENGTH:
                 l_comparison = sorted([pos[s_d] for pos in line])
                 _, chunked = self._get_chunked(l_comparison, [])
                 to_clear = [
                     n for chunk in chunked
                     for n in chunk
-                    if len(chunk) >= self.clear_lenght
+                    if len(chunk) >= CLEAR_LENGTH
                         ]
                 if to_clear:
                     return [pos for pos in line if pos[s_d] in to_clear]
@@ -292,17 +294,20 @@ class Game:
                     ]
             self._move_frozen(frozen_to_move)
 
+    # TODO: test me
     def _clear_rows(self) -> None:
         """Clear filled row
         """
         frozen = self.grid.get_frozen
-        if len(frozen) >= self.clear_lenght:
+        if len(frozen) >= CLEAR_LENGTH:
             frozen_pos = [cell.pos for cell in frozen]
             for dim in [0, 1]:
                 line = self._check_line(dim, frozen_pos)
                 if line:
                     for pos in line:
                         self.grid.grid[pos[0]][pos[1]].clear()
+                        self._change_score()
+                        self._change_speed()
                     self._clear_rows()
                     frozen_to_move = [
                         cell for cell
@@ -314,14 +319,15 @@ class Game:
     def _change_score(self) -> None:
         """Change score and set flash timeout
         """
-        self.score += 50
-        self.score_color_timeout = 60
+        self.score += PRIZE_BY_CLEAR
+        self.score_color_timeout = COLOR_TIMOUT
 
     def _change_speed(self) -> None:
         """Change speed and set flash timeout
         """
-        self.speed += 1
-        self.speed_color_timeout = 60
+        if self.score // 1000 > self.speed:
+            self.speed += 1
+            self.speed_color_timeout = COLOR_TIMOUT
 
     def _set_color(self, color_attr: str) -> int:
         """Set flash color
