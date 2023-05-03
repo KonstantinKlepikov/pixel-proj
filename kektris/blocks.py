@@ -33,12 +33,8 @@ class Cell:
         self.y = y
         self.state = state
         self._pos = (x, y)
-        # self.move_direction: Optional[Direction] = None
 
     def __repr__(self) -> str:
-        # m_d = self.move_direction.name if self.move_direction else None
-        # return f'Cell with position ({self.x}, {self.y}), ' \
-        #        f'state: {self.state.name}, move direction: {m_d})'
         return f'Cell with position ({self.x}, {self.y}), state: {self.state.name}'
 
     @property
@@ -329,13 +325,6 @@ class Figure:
         self.window.grid.clear_blocked()
         [self.window.grid.grid[cell.x][cell.y].block() for cell in cells]
         self.window = window
-
-    # def set_cells_move_direction(self) -> None:
-    #     """Set move direction for blocked cells
-    #     """
-    #     cells = self.window.map_window
-    #     for cell in cells:
-    #         cell.move_direction = self.window.move_direction
 
     def is_ready_for_freeze_figure(self) -> bool:
         """Freeze figure
