@@ -297,7 +297,7 @@ class TestFigure:
     def test_is_ready_for_freeze_figure(self, grid: Grid) -> None:
         """Test freeze figure
         """
-        window = Window((16, 0), FigureOrientation.O, grid, Direction.LEFT)
+        window = Window((16, 0), FigureOrientation.O_L, grid, Direction.LEFT)
         figure = Figure(window)
         figure.block_figure(figure.window)
         assert figure.is_ready_for_freeze_figure(), 'wrong get blocked'
@@ -326,17 +326,6 @@ class TestFigure:
             assert window.top_left == result, 'not moved'
         else:
             assert not window, 'moved to not accepted side'
-
-    def test_choose_orientation_raise_if_squire(self, grid: Grid) -> None:
-        """Test choose orientation raise if squire
-        """
-        window = Window((0, 0), FigureOrientation.O, grid, Direction.LEFT)
-        figure = Figure(window)
-        with pytest.raises(
-            ValueError,
-            match='Is a squire! It havent orientation!'
-                ):
-            figure._choose_orientation(Direction.RIGHT)
 
     def test_choose_orientation_raise_if_wrong_direction(self, grid: Grid) -> None:
         """Test choose orientation raise if wrong direction
@@ -371,6 +360,5 @@ class TestFigure:
         """
         figure.rotate_figure(direction)
         assert figure.window.top_left == (0, 0), 'wrong top left'
-        if figure.window.orientation.name != 'O':  # case with square apriory done
-            assert figure.window.orientation.name[2] == result, \
-                'wrong orientation'
+        assert figure.window.orientation.name[2] == result, \
+            'wrong orientation'

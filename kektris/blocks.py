@@ -284,8 +284,8 @@ class Figure:
     def rotate_figure(self, direction: Direction) -> Optional[Window]:
         """Rotates a figure in a given rotation side
         """
-        if self.window.orientation == FigureOrientation.O:
-            return
+        # if self.window.orientation == FigureOrientation.O:
+        #     return
 
         new_window = Window(
             self.window.top_left,
@@ -300,12 +300,7 @@ class Figure:
     def _choose_orientation(self, direction: Direction) -> Orientation:
         """Choose orientation of figure after rotation
         """
-        try:
-            orientation = self.window.orientation.name[2]
-        except IndexError:
-            raise ValueError('Is a squire! It havent orientation!')
-
-        ind = Orientation[orientation].value
+        ind = Orientation[self.window.orientation.name[2]].value
         match direction, ind:
             case Direction.RIGHT, 4:
                 return Orientation(1)
