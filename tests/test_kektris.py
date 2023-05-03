@@ -1,6 +1,6 @@
 import pytest
 from kektris.kektris import Game
-from kektris.blocks import Grid, Figure, Window
+from kektris.blocks import Grid, Figure
 from kektris.constraints import FigureOrientation, Direction
 from conftest import FixedSeed
 
@@ -53,6 +53,7 @@ class TestGame:
         'i,ch', [
             ([1, 2, 3, 4, 5, 6, 8, 9], [[6, 5, 4, 3, 2, 1], [9, 8]]),
             ([1, 3], [[1], [3]]),
+            ([1, 2, 5, 6, 8, 9], [[2, 1], [6, 5], [9, 8]])
                     ]
                 )
     def test_get_chunked_parts(self, make_app: Game, i: list[int], ch: list[list[int]]) -> None:
@@ -62,23 +63,45 @@ class TestGame:
         assert not line, 'line nt empty'
         assert isinstance(line, list), 'wrong line type'
         assert isinstance(chunked, list), 'wrong chunked type'
-        assert len(chunked) == 2, 'wrong chunked len'
+        assert len(chunked) == len(ch), 'wrong chunked len'
         assert isinstance(chunked[0], list), 'wrong chunk type'
         assert chunked[0] == ch[0], 'wrong chunked'
         assert chunked[1] == ch[1], 'wrong chunked'
 
-    def test_check_line(self, make_app: Game) -> None:
+    @pytest.mark.parametrize(
+        'frozen,result,ost', [
+            (
+                [(p,0) for p in range(17)],
+                [(p,0) for p in range(17)],
+                []
+                    ),
+            (
+                [(p,0) for p in range(7)]+[(0,4),],
+                [(p,0) for p in range(7)],
+                [(0,4),],
+                    )
+                ]
+            )
+    def test_check_line(
+        self,
+        make_app: Game,
+        frozen: list[tuple[int, int]],
+        result: list[tuple[int, int]],
+        ost: list[tuple[int, int]],
+        ) -> None:
         """Test is line is ready to clear
         """
-        for p in range(17):
-            make_app.grid.grid[p][0].freeze()
+        for p in frozen:
+            make_app.grid.grid[p[0]][p[1]].freeze()
         frozen_pos = [p.pos for p in make_app.grid.get_frozen]
-        assert len(make_app.grid.get_frozen) == 17, 'wrong frozen'
+        assert len(make_app.grid.get_frozen) == len(frozen), 'wrong frozen'
         line = make_app._check_line(1, frozen_pos)
         assert isinstance(line, list), 'wrong line type'
         assert isinstance(line[0], tuple), 'wrong pos'
-        assert len(line) == 17, 'wrong line lenght'
-        assert frozen_pos == line, 'wrong comparison'
+        assert line == result, 'wrong comparison'
+        if ost:
+            for p in ost:
+                assert make_app.grid.grid[p[0]][p[1]].is_frozen, 'unfrozen'
 
     def test_check_line_parts(self, make_app: Game) -> None:
         """Test is line is ready to clear if parts
@@ -95,22 +118,103 @@ class TestGame:
         assert len(line) == 12, 'wrong line lenght'
         assert frozen_pos[0:12] == line, 'wrong comparison'
 
-    # FIXME: rewrite ambiculous
-    def test_move_frozen(self, make_app: Game, grid: Grid) -> None:
-        """Test move frozen
+    def test_get_shift(self, make_app: Game) -> None:
+        """Test get shift for frozen cells
         """
-        window = Window((0, 0), FigureOrientation.J_L, grid, Direction.RIGHT)
-        make_app.grid = grid
-        make_app.figure = Figure(window)
-        make_app.figure.block_figure(window)
-        make_app.figure.set_cells_move_direction()
-        make_app.figure.window.grid.freeze_blocked()
-        frozen_to_move = make_app.grid.get_frozen
-        make_app._move_frozen(frozen_to_move)
-        result = make_app.grid.get_frozen
-        assert len(result) == 4, 'wrong len of frozen'
-        assert [cell.pos for cell in result] == [(15,0),(16,0),(16,1),(16,2)], \
-            'wrong result'
+        make_app.figure.window.move_direction = Direction.LEFT
+        assert make_app._get_shift(0, 0) == (1, 0), 'wrong left shift'
+        assert make_app._get_shift(12, 0) == (13, 0), 'wrong colossal shift'
+        make_app.figure.window.move_direction = Direction.RIGHT
+        assert make_app._get_shift(0, 0) == (-1, 0), 'wrong right shift'
+        assert make_app._get_shift(12, 0) == (11, 0), 'wrong colossal shift'
+        make_app.figure.window.move_direction = Direction.UP
+        assert make_app._get_shift(0, 0) == (0, 1), 'wrong up shift'
+        make_app.figure.window.move_direction = Direction.DOWN
+        assert make_app._get_shift(0, 0) == (0, -1), 'wrong down shift'
+
+    @pytest.mark.parametrize(
+        'frozen,line,result,direction', [
+            (
+                [(31,0), (31,1), (31,2), (32,0), (33,5)],
+                [(30,n) for n in range(7)] ,
+                [(31,0), (31,1), (31,2), (32,0)],
+                Direction.LEFT,
+                    ),
+            (
+                [(5,0), (5,1), (5,2), (4,0), (3,0), (33,5)],
+                [(6,n) for n in range(7)] ,
+                [(5,0), (5,1), (5,2), (4,0), (3,0)],
+                Direction.RIGHT,
+                    ),
+                ]
+            )
+    def test_get_shifted_frozen(
+        self,
+        make_app: Game,
+        frozen: list[tuple[int, int]],
+        line: list[tuple[int, int]],
+        result: list[tuple[int, int]],
+        direction: Direction
+            ) -> None:
+        """Test frozen can be shifted
+        """
+        make_app.figure.window.move_direction = direction
+        quarter = make_app.figure.window.quarter
+        for pos in frozen:
+            make_app.grid.grid[pos[0]][pos[1]].freeze()
+        shifted = make_app._get_shifted_frozen(line)
+        assert shifted == result, 'wrong shifted'
+        for pos in shifted:
+            assert pos in quarter, 'not in quarter'
+
+    @pytest.mark.parametrize(
+        'shifted,result,direction', [
+            (
+                [(31,0), (31,1), (31,2), (32,0)],
+                {(30,0), (30,1), (30,2), (31,0)},
+                Direction.LEFT,
+                    ),
+            (
+                [(5,0), (5,1), (5,2), (4,0), (3,0)],
+                {(6,0), (6,1), (6,2), (5,0), (4,0)},
+                Direction.RIGHT,
+                    ),
+                    (
+                [(0,16), (1,16), (1,17)],
+                {(1,16),},
+                Direction.UP,
+                    ),
+                ]
+            )
+    def test_move_shifted_frozen(
+        self,
+        make_app: Game,
+        shifted: list[tuple[int, int]],
+        result: list[tuple[int, int]],
+        direction: Direction
+            ) -> None:
+        """Test move shifted frozen
+        """
+        make_app.figure.window.move_direction = direction
+        quarter = make_app.figure.window.quarter
+        for pos in shifted:
+            make_app.grid.grid[pos[0]][pos[1]].freeze()
+        make_app._move_shifted_frozen(shifted)
+        assert {cell.pos for cell in make_app.grid.get_frozen} == result, 'wrong result'
+
+    # TODO: remove me
+    # def test_line_orientation(self, make_app: Game) -> None:
+    #     """Test line orientation
+    #     """
+    #     assert make_app._line_orientation([(0, 0), (0, 1)]) == Axis.Y, \
+    #         'wrong orientation'
+    #     assert make_app._line_orientation([(0, 0), (1, 0)]) == Axis.X, \
+    #         'wrong orientation'
+    #     with pytest.raises(
+    #         ValueError,
+    #         match="Isn't line!"
+    #             ):
+    #         make_app._line_orientation([(0, 0), (1, 1)])
 
     def test_change_speed(self, make_app: Game) -> None:
         """Test change speed

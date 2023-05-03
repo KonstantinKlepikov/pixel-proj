@@ -21,6 +21,14 @@ class BaseEnum(Enum):
         return cls._member_names_
 
 
+# TODO: remove me
+# class Axis(Enum):
+#     """Clear line orientation
+#     """
+#     X = auto()
+#     Y = auto()
+
+
 class Direction(Enum):
     """Move or rotation directions
     """
