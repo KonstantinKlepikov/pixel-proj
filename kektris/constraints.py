@@ -21,14 +21,6 @@ class BaseEnum(Enum):
         return cls._member_names_
 
 
-# TODO: remove me
-# class Axis(Enum):
-#     """Clear line orientation
-#     """
-#     X = auto()
-#     Y = auto()
-
-
 class Direction(Enum):
     """Move or rotation directions
     """
@@ -247,16 +239,13 @@ ARRIVE_LEFT = [(-4, y) for y in range(30)]
 ARRIVE_RIGHT = [(34, y) for y in range(30)]
 ARRIVE = ARRIVE_TOP + ARRIVE_BOTTOM + ARRIVE_LEFT + ARRIVE_RIGHT
 
-LEFT_FREEZE_ZONE = {(16, y) for y in range(34)}
-RIGHT_FREEZE_ZONE = {(17, y) for y in range(34)}
-TOP_FREEZE_ZONE = {(x, 16) for x in range(34)}
-BOTTOM_FREEZE_ZONE = {(x, 17) for x in range(34)}
+LEFT_QUARTER = [(x, y) for x in range(-4, 17) for y in range(0, 34)]
+RIGHT_QUARTER = [(x, y) for x in range(17, 37) for y in range(0, 34)]
+BOTTOM_QUARTER = [(x, y) for x in range(0, 34) for y in range(17, 37)]
+TOP_QUARTER = [(x, y) for x in range(0, 34) for y in range(-4, 17)]
 
-LEFT_QUARTER = [(x, y) for x in range(17) for y in range(34)]
-RIGHT_QUARTER = [(x, y) for x in range(17, 34) for y in range(34)]
-BOTTOM_QUARTER = [(x, y) for x in range(34) for y in range(17, 34)]
-TOP_QUARTER = [(x, y) for x in range(34) for y in range(17)]
-
-PRIZE_BY_CLEAR = 10
+PRIZE_BY_CLEAR = 100
 COLOR_TIMOUT = 60
 CLEAR_LENGTH = 7
+GAME_SPEED = 40
+SPEED_MODIFICATOR = 1000

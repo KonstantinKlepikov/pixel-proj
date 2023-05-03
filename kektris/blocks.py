@@ -7,10 +7,6 @@ from kektris.constraints import (
     ARRIVE_BOTTOM,
     ARRIVE_LEFT,
     ARRIVE_RIGHT,
-    RIGHT_FREEZE_ZONE,
-    LEFT_FREEZE_ZONE,
-    TOP_FREEZE_ZONE,
-    BOTTOM_FREEZE_ZONE,
     LEFT_QUARTER,
     RIGHT_QUARTER,
     TOP_QUARTER,
@@ -220,7 +216,9 @@ class Window:
         if self._map_window is None:
             self._map_window = []
             for maps, cells in zip(self.orientation.value, self.get_window):
-                self._map_window.extend([cell for m, cell in zip(maps, cells) if cell and m])
+                self._map_window.extend(
+                    [cell for m, cell in zip(maps, cells) if cell and m]
+                        )
         return self._map_window
 
     def has_frozen(self) -> bool:
@@ -230,6 +228,24 @@ class Window:
             if cell.is_frozen:
                 return True
         return False
+
+    def is_in_quarter(self) -> bool:
+        """Is all figure cells in quarter
+        """
+        for cell in self.map_window:
+            if cell.pos not in self.quarter:
+                return False
+        return True
+
+    def is_on_grid(self) -> bool:
+        """Is figure on grid
+        """
+        return len(self.map_window) > 0
+
+    def is_full_on_grid(self) -> bool:
+        """Is figure on grid completly
+        """
+        return len(self.map_window) == 4
 
 
 class Figure:
@@ -284,9 +300,6 @@ class Figure:
     def rotate_figure(self, direction: Direction) -> Optional[Window]:
         """Rotates a figure in a given rotation side
         """
-        # if self.window.orientation == FigureOrientation.O:
-        #     return
-
         new_window = Window(
             self.window.top_left,
             FigureOrientation[
@@ -321,32 +334,16 @@ class Figure:
         [self.window.grid.grid[cell.x][cell.y].block() for cell in cells]
         self.window = window
 
-    def is_ready_for_freeze_figure(self) -> bool:
-        """Freeze figure
-        """
-        positions = {pos.pos for pos in self.window.grid.get_blocked}
-        match self.window.move_direction:
-            case Direction.RIGHT:
-                diff = positions & LEFT_FREEZE_ZONE
-            case Direction.LEFT:
-                diff = positions & RIGHT_FREEZE_ZONE
-            case Direction.UP:
-                diff = positions & BOTTOM_FREEZE_ZONE
-            case Direction.DOWN:
-                diff = positions & TOP_FREEZE_ZONE
-            case _:
-                diff = set()
-        if diff:
-            return True
-        return False
-
     def is_valid_figure(
         self,
         window: Optional[Window],
             ) -> bool:
-        """"Returns true if all the tiles of the block are valid
-        i.e. on the grid and doesn't occupy already filled tiles
+        """"Returns true if all the cells of the block are valid
+        i.e. on the grid and doesn't occupy already frozen cells
+        or new figure cant move across its freeze quarter
         """
-        if window:
-            return not window.has_frozen()
+        if window \
+                and not window.has_frozen() \
+                and window.is_in_quarter():
+            return True
         return False
