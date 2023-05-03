@@ -9,6 +9,8 @@ from kektris.constraints import (
     PRIZE_BY_CLEAR,
     COLOR_TIMOUT,
     CLEAR_LENGTH,
+    GAME_SPEED,
+    SPEED_MODIFICATOR,
         )
 
 
@@ -71,10 +73,6 @@ class Game:
         if self.paused:
             return
 
-        if self.figure.is_ready_for_freeze_figure():
-            self.grid.freeze_blocked()
-            self.figure = self._arrive_figure()
-
         move_direction = None
         rotate_direction = None
         if pyxel.btnp(pyxel.KEY_LEFT, 12, 2):
@@ -90,28 +88,29 @@ class Game:
         elif pyxel.btnp(pyxel.KEY_X, 12, 20):
             rotate_direction = Direction.RIGHT
 
-        if move_direction:
+        if move_direction and self.figure.window.is_on_grid():
             window = self.figure.move_figure(move_direction)
             if self.figure.is_valid_figure(window):
-                self.figure.block_figure(window)
+                if window.is_full_on_grid():
+                    self.figure.block_figure(window)
 
-        if rotate_direction:
+        if rotate_direction and self.figure.window.is_on_grid():
             window = self.figure.rotate_figure(rotate_direction)
             if self.figure.is_valid_figure(window):
-                self.figure.block_figure(window)
+                if window.is_full_on_grid():
+                    self.figure.block_figure(window)
 
-        if self.frame_count_from_last_move == 45 - self.speed:
+        if self.frame_count_from_last_move == GAME_SPEED - self.speed:
             window = self.figure.move_figure(self.figure.window.move_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
             else:
                 self.grid.freeze_blocked()
+                self._clear_rows()
                 self.figure = self._arrive_figure()
 
             self.frame_count_from_last_move = 0
             return
-
-        self._clear_rows()
 
         # check is game end and stop iteration
 
@@ -256,17 +255,6 @@ class Game:
                 if to_clear:
                     return [pos for pos in line if pos[s_d] in to_clear]
 
-    # TODO: remove me
-    # def _line_orientation(self, line: list[tuple[int, int]]) -> Axis:
-    #     """Check line orientation - is placed along X axis or Y axis.
-    #     """
-    #     if line[0][0] == line[1][0] and line[0][1] != line[1][1]:
-    #         return Axis.Y
-    #     elif line[0][1] == line[1][1] and line[0][0] != line[1][0]:
-    #         return Axis.X
-    #     else:
-    #         raise ValueError("Isn't line!")
-
     def _get_shift(self, shift_x: int, shift_y: int) -> tuple[int, int]:
         """Get shift for frozen to move it
         """
@@ -360,7 +348,7 @@ class Game:
     def _change_speed(self) -> None:
         """Change speed and set flash timeout
         """
-        if self.score // 1000 > self.speed:
+        if self.score // SPEED_MODIFICATOR > self.speed:
             self.speed += 1
             self.speed_color_timeout = COLOR_TIMOUT
 

@@ -224,9 +224,6 @@ class TestWindow:
 
     def test_has_frozen(self, grid: Grid) -> None:
         """Test has frozen mapped window
-
-        Args:
-            grid (Grid): _description_
         """
         window = Window((0, 0), FigureOrientation.I_L, grid, Direction.LEFT)
         assert not window.has_frozen(), 'has frozen'
@@ -234,6 +231,57 @@ class TestWindow:
         window.grid.grid[1][1].freeze()
         assert window.has_frozen(), 'not has frozen'
 
+    @pytest.mark.parametrize('top_left,direction', [
+        [(0,0), Direction.RIGHT],
+        [(18,0), Direction.LEFT],
+        [(0,18), Direction.UP],
+        [(0,0), Direction.DOWN],
+            ]
+        )
+    def test_is_in_quarter(
+        self,
+        grid: Grid,
+        top_left: tuple[int, int],
+        direction: Direction
+            ) -> None:
+        """Test is figure in quarter
+        """
+        window = Window(top_left, FigureOrientation.I_L, grid, direction)
+        assert window.is_in_quarter(), 'not in quarter'
+
+    @pytest.mark.parametrize(
+        'direction',
+        [Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN]
+            )
+    def test_is_not_in_quarter(
+        self,
+        grid: Grid,
+        direction: Direction
+            ) -> None:
+        """Test is figure not in quarter
+        """
+        window = Window((15,15), FigureOrientation.O_D, grid, direction)
+        assert not window.is_in_quarter(), 'in quarter'
+
+    @pytest.mark.parametrize('top_left,result', [
+        [(0,0), True],
+        [(-4,0), False],
+        [(33,33), False],
+        [(-1,0), True],
+        [(16, 16), True],
+        [(30, 33), True],
+            ]
+        )
+    def test_is_on_greed(
+        self,
+        grid: Grid,
+        top_left: tuple[int, int],
+        result: bool
+            ) -> None:
+        """Test is figure on grid
+        """
+        window = Window(top_left, FigureOrientation.I_L, grid, Direction.LEFT)
+        assert window.is_on_grid() == result, 'wrong result'
 
 class TestFigure:
     """Test figure class
@@ -261,14 +309,16 @@ class TestFigure:
     def test_is_valid_figure(self, figure: Figure) -> None:
         """Test is_valid_figure method
         """
+        figure.window.move_direction = Direction.RIGHT
         assert figure.is_valid_figure(figure.window), 'not valid'
 
     def test_is_valid_figure_has_frozen(self, figure: Figure, grid: Grid) -> None:
-        """Test is_valid_figure method
+        """Test is_valid_figure method with frozen
         """
         grid.grid[1][1].freeze()
         grid.grid[2][2].freeze()
         grid.grid[3][3].freeze()
+        figure.window.move_direction = Direction.RIGHT
         assert not figure.is_valid_figure(figure.window), 'valid'
 
     def test_block_figure(
@@ -292,15 +342,6 @@ class TestFigure:
         figure.block_figure(window)
         assert figure.window.grid.get_blocked, 'not blocked'
         assert figure.window.grid.grid[33][33].is_clear, 'not clear'
-
-    # TODO: rewrite me for all params
-    def test_is_ready_for_freeze_figure(self, grid: Grid) -> None:
-        """Test freeze figure
-        """
-        window = Window((16, 0), FigureOrientation.O_L, grid, Direction.LEFT)
-        figure = Figure(window)
-        figure.block_figure(figure.window)
-        assert figure.is_ready_for_freeze_figure(), 'wrong get blocked'
 
     @pytest.mark.parametrize(
         'direction,result', [

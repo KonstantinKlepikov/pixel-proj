@@ -202,20 +202,6 @@ class TestGame:
         make_app._move_shifted_frozen(shifted)
         assert {cell.pos for cell in make_app.grid.get_frozen} == result, 'wrong result'
 
-    # TODO: remove me
-    # def test_line_orientation(self, make_app: Game) -> None:
-    #     """Test line orientation
-    #     """
-    #     assert make_app._line_orientation([(0, 0), (0, 1)]) == Axis.Y, \
-    #         'wrong orientation'
-    #     assert make_app._line_orientation([(0, 0), (1, 0)]) == Axis.X, \
-    #         'wrong orientation'
-    #     with pytest.raises(
-    #         ValueError,
-    #         match="Isn't line!"
-    #             ):
-    #         make_app._line_orientation([(0, 0), (1, 1)])
-
     def test_change_speed(self, make_app: Game) -> None:
         """Test change speed
         """
