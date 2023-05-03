@@ -95,22 +95,36 @@ class TestGame:
         assert len(line) == 12, 'wrong line lenght'
         assert frozen_pos[0:12] == line, 'wrong comparison'
 
-    # FIXME: rewrite ambiculous
-    def test_move_frozen(self, make_app: Game, grid: Grid) -> None:
-        """Test move frozen
-        """
-        window = Window((0, 0), FigureOrientation.J_L, grid, Direction.RIGHT)
-        make_app.grid = grid
-        make_app.figure = Figure(window)
-        make_app.figure.block_figure(window)
-        make_app.figure.set_cells_move_direction()
-        make_app.figure.window.grid.freeze_blocked()
-        frozen_to_move = make_app.grid.get_frozen
-        make_app._move_frozen(frozen_to_move)
-        result = make_app.grid.get_frozen
-        assert len(result) == 4, 'wrong len of frozen'
-        assert [cell.pos for cell in result] == [(15,0),(16,0),(16,1),(16,2)], \
-            'wrong result'
+    # TODO: remove me
+    # def test_line_orientation(self, make_app: Game) -> None:
+    #     """Test line orientation
+    #     """
+    #     assert make_app._line_orientation([(0, 0), (0, 1)]) == Axis.Y, \
+    #         'wrong orientation'
+    #     assert make_app._line_orientation([(0, 0), (1, 0)]) == Axis.X, \
+    #         'wrong orientation'
+    #     with pytest.raises(
+    #         ValueError,
+    #         match="Isn't line!"
+    #             ):
+    #         make_app._line_orientation([(0, 0), (1, 1)])
+
+    # TODO: remove me
+    # def test_move_frozen(self, make_app: Game, grid: Grid) -> None:
+    #     """Test move frozen
+    #     """
+    #     window = Window((0, 0), FigureOrientation.J_L, grid, Direction.RIGHT)
+    #     make_app.grid = grid
+    #     make_app.figure = Figure(window)
+    #     make_app.figure.block_figure(window)
+    #     make_app.figure.set_cells_move_direction()
+    #     make_app.figure.window.grid.freeze_blocked()
+    #     frozen_to_move = make_app.grid.get_frozen
+    #     make_app._move_frozen(frozen_to_move)
+    #     result = make_app.grid.get_frozen
+    #     assert len(result) == 4, 'wrong len of frozen'
+    #     assert [cell.pos for cell in result] == [(15,0),(16,0),(16,1),(16,2)], \
+    #         'wrong result'
 
     def test_change_speed(self, make_app: Game) -> None:
         """Test change speed

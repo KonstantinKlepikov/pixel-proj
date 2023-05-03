@@ -5,6 +5,7 @@ from kektris.blocks import Grid, Figure, Window, Cell
 from kektris.constraints import (
     Direction,
     FigureOrientation,
+    # Axis,
     ARRIVE,
     LEFT_QUARTER,
     RIGHT_QUARTER,
@@ -98,19 +99,19 @@ class Game:
             window = self.figure.move_figure(move_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
-                self.figure.set_cells_move_direction()
+                # self.figure.set_cells_move_direction()
 
         if rotate_direction:
             window = self.figure.rotate_figure(rotate_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
-                self.figure.set_cells_move_direction()
+                # self.figure.set_cells_move_direction()
 
         if self.frame_count_from_last_move == 45 - self.speed:
             window = self.figure.move_figure(self.figure.window.move_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
-                self.figure.set_cells_move_direction()
+                # self.figure.set_cells_move_direction()
             else:
                 self.grid.freeze_blocked()
                 self.figure = self._arrive_figure()
@@ -207,7 +208,7 @@ class Game:
                 )
 
     def _draw_figures(self) -> None:
-        """Draw blocked and frozen from Grid object
+        """Draw blocked and frozen cells from Grid object
         """
         for n, row in enumerate(self.grid.grid):
             for m, cell in enumerate(row):
@@ -244,7 +245,7 @@ class Game:
         dimension: int,
         frozen_pos: list[tuple[int, int]]
         ) -> Optional[list[tuple[int, int]]]:
-        """Check is line ready to clear
+        """Check is line ready to clear and return positions to clear
         """
         s_d = 0 if dimension else 1
         comparison = [c[dimension] for c in frozen_pos]
@@ -263,36 +264,95 @@ class Game:
                 if to_clear:
                     return [pos for pos in line if pos[s_d] in to_clear]
 
-    def _move_frozen(self, frozen_to_move: list[Cell]) -> None:
-        """Move frozen rows after clear
+    # TODO: remove me
+    # def _line_orientation(self, line: list[tuple[int, int]]) -> Axis:
+    #     """Check line orientation - is placed along X axis or Y axis.
+    #     """
+    #     if line[0][0] == line[1][0] and line[0][1] != line[1][1]:
+    #         return Axis.Y
+    #     elif line[0][1] == line[1][1] and line[0][0] != line[1][0]:
+    #         return Axis.X
+    #     else:
+    #         raise ValueError("Isn't line!")
+
+    # TODO: test me
+    def _get_shift(self, shift_x: int, shift_y: int) -> tuple[int, int]:
+        """Get shift for frozen to move it
         """
         match self.figure.window.move_direction:
             case Direction.RIGHT:
-                candidates = [self.grid.grid[cell.x+1][cell.y] for cell in frozen_to_move]
-                quarter = LEFT_QUARTER
+                shift_x -= 1
             case Direction.LEFT:
-                candidates = [self.grid.grid[cell.x-1][cell.y] for cell in frozen_to_move]
-                quarter = RIGHT_QUARTER
+                shift_x += 1
             case Direction.UP:
-                candidates = [self.grid.grid[cell.x][cell.y-1] for cell in frozen_to_move]
-                quarter = BOTTOM_QUARTER
+                shift_y += 1
             case Direction.DOWN:
-                candidates = [self.grid.grid[cell.x][cell.y+1] for cell in frozen_to_move]
-                quarter = TOP_QUARTER
-        count = 0
-        for new_, old in zip(candidates, frozen_to_move):
-            if not new_.is_frozen and new_.pos in quarter:
-                old.clear()
-                new_.freeze()
-                new_.move_direction = self.figure.window.move_direction
-                count += 1
-        if count:
-            frozen_to_move = [
-                cell for cell
-                in self.grid.get_frozen
-                if cell.move_direction == self.figure.window.move_direction
+                shift_y -= 1
+        return shift_x, shift_y
+
+    # TODO: test me
+    def _get_shifted_frozen(self, line: list[tuple[int, int]]) -> list[tuple[int, int]]:
+        """Get shifted frozen positions for move
+        """
+        shift_x, shift_y = 0, 0
+        shifted = []
+        while True:
+            shift_x, shift_y = self._get_shift(shift_x, shift_y)
+            sh = [
+                (pos[0]+shift_x, pos[1]+shift_y) for pos in line
+                if pos in self.figure.window.quarter
+                and pos not in line
+                and self.grid.grid[pos[0]+shift_x][pos[1]+shift_x].is_frozen
                     ]
-            self._move_frozen(frozen_to_move)
+            if sh:
+                shifted.append[sh]
+            else:
+                break
+        return shifted
+
+    # TODO: test me # FIXME: move it bon distance of line deep on this axis
+    def _move_shifted_frozen(self, shifted: list[tuple[int, int]]) -> None:
+        """Move frozen rows after clear
+        """
+        shift_x, shift_y = self._get_shift(0, 0)
+        [self.grid.grid[pos[0]][pos[1]].clear() for pos in shifted]
+        [
+            self.grid.grid[pos[0]-shift_x][pos[1]-shift_y].freeze()
+            for pos in shifted
+            if pos in self.figure.window.quarter
+                ]
+
+    # TODO: remove me
+    # def _move_frozen(self, frozen_to_move: list[Cell]) -> None:
+    #     """Move frozen rows after clear
+    #     """
+    #     match self.figure.window.move_direction:
+    #         case Direction.RIGHT:
+    #             candidates = [self.grid.grid[cell.x+1][cell.y] for cell in frozen_to_move]
+    #             quarter = LEFT_QUARTER
+    #         case Direction.LEFT:
+    #             candidates = [self.grid.grid[cell.x-1][cell.y] for cell in frozen_to_move]
+    #             quarter = RIGHT_QUARTER
+    #         case Direction.UP:
+    #             candidates = [self.grid.grid[cell.x][cell.y-1] for cell in frozen_to_move]
+    #             quarter = BOTTOM_QUARTER
+    #         case Direction.DOWN:
+    #             candidates = [self.grid.grid[cell.x][cell.y+1] for cell in frozen_to_move]
+    #             quarter = TOP_QUARTER
+    #     count = 0
+    #     for new_, old in zip(candidates, frozen_to_move):
+    #         if not new_.is_frozen and new_.pos in quarter:
+    #             old.clear()
+    #             new_.freeze()
+    #             new_.move_direction = self.figure.window.move_direction
+    #             count += 1
+    #     if count:
+    #         frozen_to_move = [
+    #             cell for cell
+    #             in self.grid.get_frozen
+    #             if cell.move_direction == self.figure.window.move_direction
+    #                 ]
+    #         self._move_frozen(frozen_to_move)
 
     # TODO: test me
     def _clear_rows(self) -> None:
@@ -308,13 +368,17 @@ class Game:
                         self.grid.grid[pos[0]][pos[1]].clear()
                         self._change_score()
                         self._change_speed()
+                    # self._clear_rows()
+                    # frozen_to_move = [
+                    #     cell for cell
+                    #     in self.grid.get_frozen
+                    #     if cell.move_direction == self.figure.window.move_direction
+                    #         ]
+                    # self._move_frozen(frozen_to_move)
+                    shifted = self._get_shifted_frozen(line)
+                    if shifted:
+                        self._move_shifted_frozen(shifted)
                     self._clear_rows()
-                    frozen_to_move = [
-                        cell for cell
-                        in self.grid.get_frozen
-                        if cell.move_direction == self.figure.window.move_direction
-                            ]
-                    self._move_frozen(frozen_to_move)
 
     def _change_score(self) -> None:
         """Change score and set flash timeout

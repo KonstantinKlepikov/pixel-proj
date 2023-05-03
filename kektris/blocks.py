@@ -11,6 +11,10 @@ from kektris.constraints import (
     LEFT_FREEZE_ZONE,
     TOP_FREEZE_ZONE,
     BOTTOM_FREEZE_ZONE,
+    LEFT_QUARTER,
+    RIGHT_QUARTER,
+    TOP_QUARTER,
+    BOTTOM_QUARTER,
         )
 from typing import TypeAlias, Optional
 
@@ -29,12 +33,13 @@ class Cell:
         self.y = y
         self.state = state
         self._pos = (x, y)
-        self.move_direction: Optional[Direction] = None
+        # self.move_direction: Optional[Direction] = None
 
     def __repr__(self) -> str:
-        m_d = self.move_direction.name if self.move_direction else None
-        return f'Cell with position ({self.x}, {self.y}), ' \
-               f'state: {self.state.name}, move direction: {m_d})'
+        # m_d = self.move_direction.name if self.move_direction else None
+        # return f'Cell with position ({self.x}, {self.y}), ' \
+        #        f'state: {self.state.name}, move direction: {m_d})'
+        return f'Cell with position ({self.x}, {self.y}), state: {self.state.name}'
 
     @property
     def pos(self) -> tuple[int]:
@@ -161,6 +166,7 @@ class Window:
             self.move_direction = move_direction
         self._get_window: Optional[list[list[Cell | None]]] = None
         self._map_window: Optional[list[Cell]] = None
+        self._quarter: list[tuple[int, int]] = None
 
     def __repr__(self) -> str:
         return f'Window top_left: {self.top_left}, orientation: {self.orientation.name} ' \
@@ -193,6 +199,23 @@ class Window:
                     if (34 > x >= 0) and (34 > y >= 0):
                         self._get_window[row][col] = self.grid.grid[x][y]
         return self._get_window
+
+    # TODO: test me
+    @property
+    def quarter(self) -> list[tuple[int, int]]:
+        """Get quarter on grid for current window
+        """
+        if self._quarter is None:
+            match self.move_direction:
+                case Direction.RIGHT:
+                    self._quarter = LEFT_QUARTER
+                case Direction.LEFT:
+                    self._quarter = RIGHT_QUARTER
+                case Direction.UP:
+                    self._quarter = BOTTOM_QUARTER
+                case Direction.DOWN:
+                    self._quarter = TOP_QUARTER
+        return self._quarter
 
     @property
     def map_window(self) -> list[Cell]:
@@ -307,12 +330,12 @@ class Figure:
         [self.window.grid.grid[cell.x][cell.y].block() for cell in cells]
         self.window = window
 
-    def set_cells_move_direction(self) -> None:
-        """Set move direction for blocked cells
-        """
-        cells = self.window.map_window
-        for cell in cells:
-            cell.move_direction = self.window.move_direction
+    # def set_cells_move_direction(self) -> None:
+    #     """Set move direction for blocked cells
+    #     """
+    #     cells = self.window.map_window
+    #     for cell in cells:
+    #         cell.move_direction = self.window.move_direction
 
     def is_ready_for_freeze_figure(self) -> bool:
         """Freeze figure
