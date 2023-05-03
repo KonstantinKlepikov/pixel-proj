@@ -85,7 +85,25 @@ class FigureOrientation(BaseEnum):
             )
 
     # all orientations of figure O
-    O = (
+    O_U = (
+        (False, False, False, False),
+        (False, True, True, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+    O_L = (
+        (False, False, False, False),
+        (False, True, True, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+    O_D = (
+        (False, False, False, False),
+        (False, True, True, False),
+        (False, True, True, False),
+        (False, False, False, False),
+            )
+    O_R = (
         (False, False, False, False),
         (False, True, True, False),
         (False, True, True, False),
