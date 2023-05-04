@@ -18,7 +18,6 @@ from kektris.constraints import (
 class Game:
     def __init__(self) -> None:
         pyxel.init(256, 256, title="Kektris")
-        # pyxel.load('blocks.pyxres', image=True)
         self.reset()
         pyxel.run(self.update, self.draw)
 
@@ -375,6 +374,7 @@ class Game:
             return pyxel.frame_count % 8
         return 12
 
+    # TODO: test me
     def _is_game_over(self) -> bool:
         """Check is game over
         """
@@ -384,3 +384,7 @@ class Game:
                     self.is_over = True
                     break
         return self.is_over
+
+
+if __name__ == '__main__':
+    Game()
