@@ -1,18 +1,11 @@
+from typing import TypeAlias, Optional
 from kektris.constraints import (
     Direction,
     Orientation,
     CellState,
     FigureOrientation,
-    ARRIVE_TOP,
-    ARRIVE_BOTTOM,
-    ARRIVE_LEFT,
-    ARRIVE_RIGHT,
-    LEFT_QUARTER,
-    RIGHT_QUARTER,
-    TOP_QUARTER,
-    BOTTOM_QUARTER,
         )
-from typing import TypeAlias, Optional
+from kektris.constraints import GameConst as const
 
 
 class Cell:
@@ -168,13 +161,13 @@ class Window:
         """Set move direction
         """
         match top_left:
-            case _ if top_left in ARRIVE_LEFT:
+            case _ if top_left in const.ARRIVE_LEFT:
                 return Direction.RIGHT
-            case _ if top_left in ARRIVE_RIGHT:
+            case _ if top_left in const.ARRIVE_RIGHT:
                 return Direction.LEFT
-            case _ if top_left in ARRIVE_TOP:
+            case _ if top_left in const.ARRIVE_TOP:
                 return Direction.DOWN
-            case _ if top_left in ARRIVE_BOTTOM:
+            case _ if top_left in const.ARRIVE_BOTTOM:
                 return Direction.UP
         raise ValueError
 
@@ -200,13 +193,13 @@ class Window:
         if self._quarter is None:
             match self.move_direction:
                 case Direction.RIGHT:
-                    self._quarter = LEFT_QUARTER
+                    self._quarter = const.LEFT_QUARTER
                 case Direction.LEFT:
-                    self._quarter = RIGHT_QUARTER
+                    self._quarter = const.RIGHT_QUARTER
                 case Direction.UP:
-                    self._quarter = BOTTOM_QUARTER
+                    self._quarter = const.BOTTOM_QUARTER
                 case Direction.DOWN:
-                    self._quarter = TOP_QUARTER
+                    self._quarter = const.TOP_QUARTER
         return self._quarter
 
     @property

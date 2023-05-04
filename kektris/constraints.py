@@ -232,22 +232,25 @@ class FigureOrientation(BaseEnum):
         (False, False, False, False),
             )
 
+class GameConst:
+    """Game constants"""
 
-ARRIVE_TOP = [(x, -4) for x in range(30)]
-ARRIVE_BOTTOM = [(x, 34) for x in range(30)]
-ARRIVE_LEFT = [(-4, y) for y in range(30)]
-ARRIVE_RIGHT = [(34, y) for y in range(30)]
-ARRIVE = ARRIVE_TOP + ARRIVE_BOTTOM + ARRIVE_LEFT + ARRIVE_RIGHT
+    ARRIVE_TOP: list[tuple[int, int]] = [(x, -4) for x in range(30)]
+    ARRIVE_BOTTOM: list[tuple[int, int]] = [(x, 34) for x in range(30)]
+    ARRIVE_LEFT: list[tuple[int, int]] = [(-4, y) for y in range(30)]
+    ARRIVE_RIGHT: list[tuple[int, int]] = [(34, y) for y in range(30)]
+    ARRIVE = ARRIVE_TOP + ARRIVE_BOTTOM + ARRIVE_LEFT + ARRIVE_RIGHT
 
-LEFT_QUARTER = [(x, y) for x in range(-4, 17) for y in range(0, 34)]
-RIGHT_QUARTER = [(x, y) for x in range(17, 37) for y in range(0, 34)]
-BOTTOM_QUARTER = [(x, y) for x in range(0, 34) for y in range(17, 37)]
-TOP_QUARTER = [(x, y) for x in range(0, 34) for y in range(-4, 17)]
+    LEFT_QUARTER: list[tuple[int, int]] = [(x, y) for x in range(-4, 17) for y in range(0, 34)]
+    RIGHT_QUARTER: list[tuple[int, int]] = [(x, y) for x in range(17, 37) for y in range(0, 34)]
+    BOTTOM_QUARTER: list[tuple[int, int]] = [(x, y) for x in range(0, 34) for y in range(17, 37)]
+    TOP_QUARTER: list[tuple[int, int]] = [(x, y) for x in range(0, 34) for y in range(-4, 17)]
 
-GAME_OVER_ZONE = {(x, y) for x in range(0, 34) for y in [0, 33]} | {(x, y) for x in [0, 33] for y in range(0, 34)}
+    GAME_OVER_ZONE: set[tuple[int, int]] = {(x, y) for x in range(0, 34) for y in [0, 33]} | \
+        {(x, y) for x in [0, 33] for y in range(0, 34)}
 
-PRIZE_BY_CLEAR = 100
-COLOR_TIMOUT = 60
-CLEAR_LENGTH = 7
-GAME_SPEED = 40
-SPEED_MODIFICATOR = 1000
+    PRIZE_BY_CLEAR: int = 100
+    COLOR_TIMOUT: int = 60
+    CLEAR_LENGTH: int = 7
+    GAME_SPEED: int = 40
+    SPEED_MODIFICATOR: int = 1000

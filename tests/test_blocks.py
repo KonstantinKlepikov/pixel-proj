@@ -1,9 +1,6 @@
 import pytest
 from kektris.blocks import Cell, Grid, Figure, Window
-from kektris.constraints import (
-    FigureOrientation,
-    Direction,
-        )
+from kektris.constraints import FigureOrientation, Direction
 
 
 class TestCell:
