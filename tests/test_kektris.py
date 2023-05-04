@@ -42,7 +42,7 @@ class TestGame:
         """Test get chunked
         """
         i = [1, 2, 3]
-        line, chunked = make_app._get_chunked(i, [])
+        line, chunked = make_app.get_chunked(i, [])
         assert not line, 'line nt empty'
         assert isinstance(line, list), 'wrong line type'
         assert isinstance(chunked, list), 'wrong chunked type'
@@ -59,7 +59,7 @@ class TestGame:
     def test_get_chunked_parts(self, make_app: Game, i: list[int], ch: list[list[int]]) -> None:
         """Test get chunked multiple parts
         """
-        line, chunked = make_app._get_chunked(i, [])
+        line, chunked = make_app.get_chunked(i, [])
         assert not line, 'line nt empty'
         assert isinstance(line, list), 'wrong line type'
         assert isinstance(chunked, list), 'wrong chunked type'

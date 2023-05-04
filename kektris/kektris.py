@@ -2,17 +2,8 @@ import pyxel
 import random
 from typing import Optional
 from kektris.blocks import Grid, Figure, Window
-from kektris.constraints import (
-    Direction,
-    FigureOrientation,
-    ARRIVE,
-    PRIZE_BY_CLEAR,
-    COLOR_TIMOUT,
-    CLEAR_LENGTH,
-    GAME_SPEED,
-    SPEED_MODIFICATOR,
-    GAME_OVER_ZONE,
-        )
+from kektris.constraints import Direction, FigureOrientation
+from kektris.constraints import GameConst as const
 
 
 class Game:
@@ -25,20 +16,20 @@ class Game:
         """Reset game state
         """
         # menu parameters
-        self.paused = True
-        self.score = 0
-        self.speed = 0
-        self.score_color_timeout = COLOR_TIMOUT
-        self.speed_color_timeout = COLOR_TIMOUT
+        self.paused: bool = True
+        self.score: int = 0
+        self.speed: int = 0
+        self.score_color_timeout = const.COLOR_TIMOUT
+        self.speed_color_timeout = const.COLOR_TIMOUT
 
         # grid
         self.grid: Grid = Grid()
-        self.grid_higlight = False
+        self.grid_higlight: bool = False
         self.figure = self._arrive_figure()
 
         # game
-        self.frame_count_from_last_move = 0
-        self.is_over = False
+        self.frame_count_from_last_move: int = 0
+        self.is_over: bool = False
 
     def draw(self) -> None:
         """Draw current screen
@@ -92,19 +83,10 @@ class Game:
         elif pyxel.btnp(pyxel.KEY_X, 12, 20):
             rotate_direction = Direction.RIGHT
 
-        if move_direction and self.figure.window.is_on_grid():
-            window = self.figure.move_figure(move_direction)
-            if self.figure.is_valid_figure(window):
-                if window.is_full_on_grid():
-                    self.figure.block_figure(window)
+        self._move_figure(move_direction, self.figure.move_figure)
+        self._move_figure(rotate_direction, self.figure.rotate_figure)
 
-        if rotate_direction and self.figure.window.is_on_grid():
-            window = self.figure.rotate_figure(rotate_direction)
-            if self.figure.is_valid_figure(window):
-                if window.is_full_on_grid():
-                    self.figure.block_figure(window)
-
-        if self.frame_count_from_last_move == GAME_SPEED - self.speed:
+        if self.frame_count_from_last_move == const.GAME_SPEED - self.speed:
             window = self.figure.move_figure(self.figure.window.move_direction)
             if self.figure.is_valid_figure(window):
                 self.figure.block_figure(window)
@@ -117,6 +99,39 @@ class Game:
             return
 
         self.frame_count_from_last_move += 1
+
+    @classmethod
+    def get_chunked(
+        cls,
+        line: list[int],
+        chunked: list[list[int]]
+            ) -> tuple[list, list[list[int]]]:
+        """Separate line to chunked lines
+        """
+        chunk = []
+        while line:
+            a = line.pop()
+            if chunk:
+                if chunk[-1] - a == 1:
+                    chunk.append(a)
+                else:
+                    line.append(a)
+                    line, chunked = cls.get_chunked(line, chunked)
+            else:
+                chunk.append(a)
+        chunked.append(chunk)
+        return line, chunked
+
+    @staticmethod
+    def sign(n: int) -> int:
+        """Return sign of int
+        """
+        if n > 0:
+            return 1
+        elif n == 0:
+            return 0
+        else:
+            return -1
 
     def _draw_controls(self) -> None:
         """Draw controls
@@ -161,7 +176,7 @@ class Game:
         pyxel.text(219, 60, str(self.speed), self._set_color("speed_color_timeout"))
 
         pyxel.text(219, 80, "LINE", 10)
-        pyxel.text(219, 90, str(CLEAR_LENGTH), 12)
+        pyxel.text(219, 90, str(const.CLEAR_LENGTH), 12)
 
         if self.is_over:
             pyxel.text(219, 110, "GAME END", pyxel.frame_count % 8)
@@ -200,7 +215,7 @@ class Game:
         """Genrate random start position
         """
         return (
-            random.choice(ARRIVE),
+            random.choice(const.ARRIVE),
             random.choice(FigureOrientation.get_includes())
                 )
 
@@ -216,27 +231,6 @@ class Game:
                 if cell.is_frozen:
                     pyxel.rect(x, y, 5, 5, 7)
 
-    def _get_chunked(
-        self,
-        line: list[int],
-        chunked: list[list[int]]
-            ) -> tuple[list, list[list[int]]]:
-        """Separate line to chunked lines
-        """
-        chunk = []
-        while line:
-            a = line.pop()
-            if chunk:
-                if chunk[-1] - a == 1:
-                    chunk.append(a)
-                else:
-                    line.append(a)
-                    line, chunked = self._get_chunked(line, chunked)
-            else:
-                chunk.append(a)
-        chunked.append(chunk)
-        return line, chunked
-
     def _check_line(
         self,
         dimension: int,
@@ -250,13 +244,13 @@ class Game:
         max_ = max(comparison) + 1
         for n in range(min_, max_):
             line = [pos for pos in frozen_pos if pos[dimension] == n]
-            if len(line) >= CLEAR_LENGTH:
+            if len(line) >= const.CLEAR_LENGTH:
                 l_comparison = sorted([pos[s_d] for pos in line])
-                _, chunked = self._get_chunked(l_comparison, [])
+                _, chunked = self.get_chunked(l_comparison, [])
                 to_clear = [
                     n for chunk in chunked
                     for n in chunk
-                    if len(chunk) >= CLEAR_LENGTH
+                    if len(chunk) >= const.CLEAR_LENGTH
                         ]
                 if to_clear:
                     return [pos for pos in line if pos[s_d] in to_clear]
@@ -275,17 +269,6 @@ class Game:
                 shift_y -= 1
         return shift_x, shift_y
 
-    @staticmethod
-    def _sign(n: int) -> int:
-        """Return sign of int
-        """
-        if n > 0:
-            return 1
-        elif n == 0:
-            return 0
-        else:
-            return -1
-
     def _get_shifted_frozen(
         self,
         line: list[tuple[int, int]]
@@ -296,7 +279,7 @@ class Game:
         shifted = []
         while True:
             shift_x, shift_y = self._get_shift(shift_x, shift_y)
-            s_x, s_y = self._sign(shift_x), self._sign(shift_y)
+            s_x, s_y = self.sign(shift_x), self.sign(shift_y)
             sh = []
             for pos in line:
                 p = (pos[0]+shift_x, pos[1]+shift_y)
@@ -328,11 +311,20 @@ class Game:
                 ]
 
     # TODO: test me
+    def _move_figure(self, direction: Optional[Direction], operation) -> None:
+        """Move or rotate figure
+        """
+        if direction and self.figure.window.is_on_grid():
+            window: Window = operation(direction)
+            if self.figure.is_valid_figure(window) and window.is_full_on_grid():
+                self.figure.block_figure(window)
+
+    # TODO: test me
     def _clear_rows(self) -> None:
         """Clear filled row
         """
         frozen_pos = [cell.pos for cell in self.grid.get_frozen]
-        if len(frozen_pos) >= CLEAR_LENGTH:
+        if len(frozen_pos) >= const.CLEAR_LENGTH:
             for dim in [0, 1]:
                 line = self._check_line(dim, frozen_pos)
                 if line:
@@ -348,15 +340,15 @@ class Game:
     def _change_score(self) -> None:
         """Change score and set flash timeout
         """
-        self.score += PRIZE_BY_CLEAR
-        self.score_color_timeout = COLOR_TIMOUT
+        self.score += const.PRIZE_BY_CLEAR
+        self.score_color_timeout = const.COLOR_TIMOUT
 
     def _change_speed(self) -> None:
         """Change speed and set flash timeout
         """
-        if self.score // SPEED_MODIFICATOR > self.speed:
+        if self.score // const.SPEED_MODIFICATOR > self.speed:
             self.speed += 1
-            self.speed_color_timeout = COLOR_TIMOUT
+            self.speed_color_timeout = const.COLOR_TIMOUT
 
     def _set_color(self, color_attr: str) -> int:
         """Set flash color
@@ -379,7 +371,7 @@ class Game:
         """Check is game over
         """
         if self.is_over == False:
-            for pos in GAME_OVER_ZONE:
+            for pos in const.GAME_OVER_ZONE:
                 if self.grid.grid[pos[0]][pos[1]].is_frozen:
                     self.is_over = True
                     break
