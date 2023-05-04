@@ -11,6 +11,7 @@ from kektris.constraints import (
     CLEAR_LENGTH,
     GAME_SPEED,
     SPEED_MODIFICATOR,
+    GAME_OVER_ZONE,
         )
 
 
@@ -38,6 +39,7 @@ class Game:
 
         # game
         self.frame_count_from_last_move = 0
+        self.is_over = False
 
     def draw(self) -> None:
         """Draw current screen
@@ -69,6 +71,9 @@ class Game:
                 self.grid_higlight = False
             else:
                 self.grid_higlight = True
+
+        if self._is_game_over():
+            return
 
         if self.paused:
             return
@@ -111,8 +116,6 @@ class Game:
 
             self.frame_count_from_last_move = 0
             return
-
-        # check is game end and stop iteration
 
         self.frame_count_from_last_move += 1
 
@@ -161,26 +164,30 @@ class Game:
         pyxel.text(219, 80, "LINE", 10)
         pyxel.text(219, 90, str(CLEAR_LENGTH), 12)
 
+        if self.is_over:
+            pyxel.text(219, 110, "GAME END", pyxel.frame_count % 8)
+
     def _mark_grid(self) -> None:
         """Draw grid mark
         """
-        match self.figure.window.move_direction:
-            case Direction.RIGHT | Direction.LEFT:
-                color = (15, pyxel.frame_count % 8)
-            case Direction.DOWN | Direction.UP:
-                color = (pyxel.frame_count % 8, 15)
-            case _:
-                color = (15, 15)
-        pyxel.line(112, 10, 112, 214, color[1])
-        pyxel.line(10, 112, 214, 112, color[0])
-
-        if self.grid_higlight:
-            for p in range(10, 217, 6):
-                if p != 112:
-                    pyxel.line(p, 10, p, 214, 13)
-                    pyxel.line(10, p, 214, p, 13)
-
         pyxel.rectb(10, 10, 205, 205, 1)
+
+        if not self.is_over:
+            match self.figure.window.move_direction:
+                case Direction.RIGHT | Direction.LEFT:
+                    color = (15, pyxel.frame_count % 8)
+                case Direction.DOWN | Direction.UP:
+                    color = (pyxel.frame_count % 8, 15)
+                case _:
+                    color = (15, 15)
+            pyxel.line(112, 10, 112, 214, color[1])
+            pyxel.line(10, 112, 214, 112, color[0])
+
+            if self.grid_higlight:
+                for p in range(10, 217, 6):
+                    if p != 112:
+                        pyxel.line(p, 10, p, 214, 13)
+                        pyxel.line(10, p, 214, p, 13)
 
     def _arrive_figure(self) -> Figure:
         """Arrive figure at random
@@ -371,6 +378,9 @@ class Game:
     def _is_game_over(self) -> bool:
         """Check is game over
         """
-        # if self.block.position[0] == 0:
-        #     return True
-        # return False
+        if self.is_over == False:
+            for pos in GAME_OVER_ZONE:
+                if self.grid.grid[pos[0]][pos[1]].is_frozen:
+                    self.is_over = True
+                    break
+        return self.is_over
