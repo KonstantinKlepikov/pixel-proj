@@ -21,7 +21,7 @@ class BaseEnum(Enum):
         return cls._member_names_
 
 
-class Direction(Enum):
+class Direction(BaseEnum):
     """Move or rotation directions
     """
     LEFT = auto()
@@ -243,6 +243,8 @@ LEFT_QUARTER = [(x, y) for x in range(-4, 17) for y in range(0, 34)]
 RIGHT_QUARTER = [(x, y) for x in range(17, 37) for y in range(0, 34)]
 BOTTOM_QUARTER = [(x, y) for x in range(0, 34) for y in range(17, 37)]
 TOP_QUARTER = [(x, y) for x in range(0, 34) for y in range(-4, 17)]
+
+GAME_OVER_ZONE = {(x, y) for x in range(0, 34) for y in [0, 33]} | {(x, y) for x in [0, 33] for y in range(0, 34)}
 
 PRIZE_BY_CLEAR = 100
 COLOR_TIMOUT = 60
