@@ -185,7 +185,6 @@ class Window:
                         self._get_window[row][col] = self.grid.grid[x][y]
         return self._get_window
 
-    # TODO: test me
     @property
     def quarter(self) -> list[tuple[int, int]]:
         """Get quarter on grid for current window

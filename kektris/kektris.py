@@ -298,7 +298,6 @@ class Game:
                 break
         return shifted
 
-    # FIXME: move it to distance of line deep on this axis
     def _move_shifted_frozen(self, shifted: list[tuple[int, int]]) -> None:
         """Move frozen rows after clear
         """
@@ -366,7 +365,6 @@ class Game:
             return pyxel.frame_count % 8
         return 12
 
-    # TODO: test me
     def _is_game_over(self) -> bool:
         """Check is game over
         """
